@@ -1,0 +1,21 @@
+{
+  "name": {
+    "en": "SuperTemplate",
+    "zh_CN": "SuperTemplate",
+    "zh_TW": "SuperTemplate",
+    "ja": "SuperTemplate"
+  },
+  "desc": {
+    "en": "One-tap header actions for note templates: datetime stamp and handwritten heading.",
+    "zh_CN": "模板页眉自动化：日期时间戳与手写标题。",
+    "zh_TW": "模板頁眉自動化：日期時間戳與手寫標題。",
+    "ja": "テンプレートのヘッダー自動化：日時スタンプと手書き見出し。"
+  },
+  "author": "AgP42",
+  "iconPath": "assets/icon.png",
+  "versionName": "0.9.0",
+  "versionCode": "30",
+  "pluginID": "yl4k7839ugmxkc0c",
+  "pluginKey": "supertemplate",
+  "jsMainPath": "index"
+}
