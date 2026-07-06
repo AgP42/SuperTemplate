@@ -1,5 +1,8 @@
 # SuperTemplate
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-black.svg)](LICENSE)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-support%20%E2%98%95-black)](https://ko-fi.com/agp42)
+
 **One double-tap turns your handwritten page title into a real Supernote
 heading and stamps the current date & time — on a ready-made note template.**
 
@@ -73,6 +76,10 @@ adapt the plugin to your own template PNG.
 - [Laumss/Inkling](https://github.com/Laumss/Inkling) (MIT) — the floating
   bubble native module adapted from its code (currently dormant) and the
   Supernote plugin development knowledge base.
+
+## Support
+
+If this is useful to you, you can support it on [Ko‑fi](https://ko-fi.com/agp42) ☕ — thank you!
 
 ## License
 
