@@ -43,7 +43,13 @@ The plugin then:
   search, or from other plugins that use keywords),
 - converts your handwritten title into a native heading.
 
-![The same page after the double-tap: date stamped, heading applied](images/01-result.png)
+In handwriting mode, your strokes stay and become the heading:
+
+![After the double-tap — handwriting mode](images/07-after-handwriting.png)
+
+In OCR mode, they are replaced by typed text before the heading is applied:
+
+![After the double-tap — OCR mode](images/08-after-ocr.png)
 
 ### Updating the date
 
