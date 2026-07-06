@@ -80,8 +80,8 @@ adapt the plugin to your own template PNG.
 ## Support
 
 If you enjoy this plugin, please consider [sponsoring a few tokens](https://ko-fi.com/agp42) ;-)
-My time and skills are offered freely — my tokens are not! Thank you for
-your support ☕
+My time and skills are free — the AI tokens behind this plugin are not!
+Thank you for your support ☕
 
 ## License
 
