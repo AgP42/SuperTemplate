@@ -269,7 +269,7 @@ function App(): React.JSX.Element {
             </Row>
           </>
         )}
-        <Row label="Style">
+        <Row label="Default">
           {HEADING_STYLES.map(h => (
             <StyleChoice
               key={h.key}
@@ -280,6 +280,32 @@ function App(): React.JSX.Element {
             />
           ))}
         </Row>
+        <Row label="Underlined">
+          {HEADING_STYLES.map(h => (
+            <StyleChoice
+              key={h.key}
+              styleKey={h.key}
+              label={h.label}
+              selected={config.styleUnderline === h.key}
+              onPress={() => update({styleUnderline: h.key})}
+            />
+          ))}
+        </Row>
+        <Row label="2× underl.">
+          {HEADING_STYLES.map(h => (
+            <StyleChoice
+              key={h.key}
+              styleKey={h.key}
+              label={h.label}
+              selected={config.styleDoubleUnderline === h.key}
+              onPress={() => update({styleDoubleUnderline: h.key})}
+            />
+          ))}
+        </Row>
+        <Text style={styles.blockHint}>
+          Underline your handwritten title (or double-underline it) to pick
+          its style with the pen — no settings needed.
+        </Text>
       </Block>
 
       <View style={styles.row}>

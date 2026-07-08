@@ -56,6 +56,8 @@ export const DEFAULT_CONFIG = {
   keyword: true,
   keywordFormat: 'YYYYMMDD',
   headingStyle: 1,
+  styleUnderline: 2,
+  styleDoubleUnderline: 4,
   headingOcr: false,
   headingFontSize: 48,
   headingFont: 'default',

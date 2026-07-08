@@ -1,6 +1,6 @@
 # SuperTemplate — User Manual
 
-*Version 0.9.0 — for Supernote devices with plugin support (tested on A5 X and Manta).*
+*Version 0.10.0 — for Supernote devices with plugin support (tested on A5 X and Manta).*
 
 SuperTemplate automates the header of your note pages: **double-tap the S logo**
 printed on the template and the plugin stamps the current date & time, then
@@ -51,6 +51,21 @@ In OCR mode, they are replaced by typed text before the heading is applied:
 
 ![After the double-tap — OCR mode](images/08-after-ocr.png)
 
+### Pick the heading style with your pen
+
+No need to open the settings to change one heading's look: **underline your
+title** before double-tapping and the plugin applies the style you mapped to
+that gesture — single underline and double underline each map to any of the
+four native styles (Settings → Heading), no markup uses your default style.
+The underline stroke is excluded from the OCR text, and cleaned up with the
+rest of the handwriting in OCR mode.
+
+![Underlined title → its mapped style](images/09-underline.png)
+
+![Double-underlined title → another style](images/10-double-underline.png)
+
+![Works in OCR mode too](images/11-underline-ocr.png)
+
 ### Updating the date
 
 An existing date is never modified. To re-stamp: delete the date text box
@@ -74,7 +89,7 @@ Open via the toolbar plugin button.
 | | Keyword | Off, or the format of the invisible date keyword |
 | 3 · Heading | OCR | Off = keep your handwriting; On = recognize it and replace it with typed text **before** applying the heading |
 | | OCR font / size | Font and size of the typed text (OCR mode only) |
-| | Style | The four native heading renderings — buttons preview the result |
+| | Default / Underlined / 2× underl. | The native heading style used with no pen markup, a single underline, or a double underline (buttons preview the result) |
 
 ## Files
 

@@ -16,7 +16,10 @@ your title, **double-tap the S logo with your finger**, and the plugin:
 - converts your handwritten title into a **native heading** (visible in the
   note's table of contents) — either keeping your handwriting (4 native
   styles) or replacing it with typed text via **on-device OCR** (font and
-  size configurable).
+  size configurable),
+- and lets you **pick the heading style with the pen**: underline or
+  double-underline your title to switch styles on the fly (mapping
+  configurable).
 
 Everything runs on-device. No cloud, no network, no account.
 

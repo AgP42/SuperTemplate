@@ -1,6 +1,31 @@
 import {PluginCommAPI, PluginNoteAPI} from 'sn-plugin-lib';
 import {HEADING_FONTS} from '../config';
+import {classifyMarkup, styleForMarkup} from '../utils/markup';
 import {log} from '../utils/logger';
+
+/** Extract a stroke bounding box from a materialized element (multi-path —
+ * firmware variants populate different fields; units don't matter, the
+ * markup classifier works in ratios). */
+function strokeBBox(m) {
+  const rr =
+    m.recognizeResult ||
+    (m.angles && m.angles.contoursSrc && m.angles.contoursSrc.recognizeResult);
+  if (rr && rr.up_left_point_x != null) {
+    return {
+      left: rr.up_left_point_x,
+      top: rr.up_left_point_y,
+      right: rr.down_right_point_x,
+      bottom: rr.down_right_point_y,
+    };
+  }
+  if (m.minX != null && m.maxX != null && m.minY != null && m.maxY != null) {
+    return {left: m.minX, top: m.minY, right: m.maxX, bottom: m.maxY};
+  }
+  if (m.rect && m.rect.left != null) {
+    return m.rect;
+  }
+  return null;
+}
 
 /**
  * Convert the title-zone content into a native Supernote heading.
@@ -31,6 +56,7 @@ export async function runHeadingAction(ctx, rect) {
     strokeNums: [],
     deleteHandwriting: false,
     lassoConsumed: false,
+    markupStyle: 0,
   };
 
   // The title box starts only ~4 px below the datetime zone on the template:
@@ -77,17 +103,53 @@ export async function runHeadingAction(ctx, rect) {
         }`,
       );
       if (lassoElements && lassoElements.length > 0) {
+        const bboxes = [];
+        let firstDumped = false;
         for (const el of lassoElements) {
           try {
             const m = JSON.parse(JSON.stringify(el));
             if (m && m.numInPage != null) {
               out.strokeNums.push(m.numInPage);
             }
-          } catch (_) {}
+            const bb = strokeBBox(m);
+            bboxes.push(bb);
+            if (!bb && !firstDumped) {
+              firstDumped = true;
+              log(`markup: no bbox on stroke — dump: ${JSON.stringify(m).slice(0, 500)}`);
+            }
+          } catch (_) {
+            bboxes.push(null);
+          }
         }
         log(`lasso stroke nums: ${JSON.stringify(out.strokeNums)}`);
+
+        // Markup detection: underline(s) under the title pick the heading
+        // style on the fly. Unit-agnostic (ratio-based classifier).
+        const validBoxes = bboxes.filter(Boolean);
+        let underlineCount = 0;
+        let ocrInput = lassoElements;
+        if (validBoxes.length === bboxes.length && bboxes.length >= 2) {
+          const {underlineIdx} = classifyMarkup(bboxes);
+          underlineCount = underlineIdx.length;
+          log(
+            `markup: ${bboxes.length} stroke bbox(es), underlines=${underlineCount}` +
+              (underlineCount
+                ? ` ${JSON.stringify(underlineIdx.map(i => bboxes[i]))}`
+                : ''),
+          );
+          if (underlineCount > 0) {
+            const skip = new Set(underlineIdx);
+            ocrInput = lassoElements.filter((_, i) => !skip.has(i));
+          }
+        } else {
+          log(
+            `markup: bbox extraction incomplete (${validBoxes.length}/${bboxes.length}) — detection skipped.`,
+          );
+        }
+        out.markupStyle = styleForMarkup(underlineCount, ctx.config);
+
         const ocrRes = await PluginCommAPI.recognizeElements(
-          lassoElements,
+          ocrInput,
           ctx.pageSize,
         );
         log(`OCR probe recognizeElements → ${JSON.stringify(ocrRes)}`);
@@ -170,7 +232,7 @@ export async function runHeadingAction(ctx, rect) {
       log(`second counts read failed: ${e.message}`);
     }
 
-    const style = ctx.config.headingStyle || 1;
+    const style = out.markupStyle || ctx.config.headingStyle || 1;
     const titleRes = await PluginNoteAPI.setLassoTitle({style});
     log(`setLassoTitle({style:${style}}) → ${JSON.stringify(titleRes)}`);
     out.converted = !!(titleRes && titleRes.success);

@@ -7,6 +7,7 @@ import {
   SUPPORTED_LANGS,
 } from '../src/utils/datetime';
 import {createDoubleTapDetector} from '../src/utils/doubleTap';
+import {classifyMarkup, styleForMarkup} from '../src/utils/markup';
 
 describe('zoneToRect', () => {
   // A5 X page size
@@ -141,5 +142,62 @@ describe('double-tap detector', () => {
     tap(200, 200, 1000);
     expect(tap(200, 200, 1700)).toBe(true);
     expect(tap(200, 200, 2400)).toBe(false);
+  });
+});
+
+
+describe('markup classifier (underline detection)', () => {
+  // A handwritten word: several smallish boxes across the upper band.
+  const word = [
+    {left: 100, top: 100, right: 180, bottom: 200},
+    {left: 190, top: 110, right: 260, bottom: 195},
+    {left: 270, top: 105, right: 380, bottom: 205},
+    {left: 390, top: 100, right: 500, bottom: 200},
+  ];
+
+  it('detects a single underline under the word', () => {
+    const underline = {left: 90, top: 225, right: 510, bottom: 233};
+    const r = classifyMarkup([...word, underline]);
+    expect(r.underlineIdx).toEqual([4]);
+  });
+
+  it('detects a double underline', () => {
+    const u1 = {left: 90, top: 225, right: 510, bottom: 233};
+    const u2 = {left: 95, top: 245, right: 505, bottom: 252};
+    const r = classifyMarkup([...word, u1, u2]);
+    expect(r.underlineIdx.length).toBe(2);
+  });
+
+  it('finds nothing on a plain word', () => {
+    expect(classifyMarkup(word).underlineIdx).toEqual([]);
+  });
+
+  it('ignores a flat-wide stroke in the UPPER band (t-bar, not underline)', () => {
+    const tbar = {left: 90, top: 102, right: 400, bottom: 110};
+    const r = classifyMarkup([...word, tbar]);
+    expect(r.underlineIdx).toEqual([]);
+  });
+
+  it('treats all-flat clusters as no markup', () => {
+    const dashes = [
+      {left: 0, top: 0, right: 400, bottom: 8},
+      {left: 0, top: 20, right: 400, bottom: 28},
+    ];
+    expect(classifyMarkup(dashes).underlineIdx).toEqual([]);
+  });
+
+  it('is unit-agnostic (same result in EMR-scale coords)', () => {
+    const k = 8.27; // arbitrary unit scale
+    const scale = b => ({left: b.left * k, top: b.top * k, right: b.right * k, bottom: b.bottom * k});
+    const underline = {left: 90, top: 225, right: 510, bottom: 233};
+    const r = classifyMarkup([...word, underline].map(scale));
+    expect(r.underlineIdx).toEqual([4]);
+  });
+
+  it('maps markup to configured styles', () => {
+    const cfg = {headingStyle: 1, styleUnderline: 2, styleDoubleUnderline: 4};
+    expect(styleForMarkup(0, cfg)).toBe(1);
+    expect(styleForMarkup(1, cfg)).toBe(2);
+    expect(styleForMarkup(2, cfg)).toBe(4);
   });
 });
