@@ -59,7 +59,8 @@ function rectsIntersect(a, b) {
  * @param {{left:number,top:number,right:number,bottom:number}} rect Pixel rect of the datetime zone.
  * @returns {Promise<{inserted:boolean}>}
  */
-export async function runDateTimeAction(ctx, rect) {
+export async function runDateTimeAction(ctx, rect, idemRects) {
+  const zonesToCheck = idemRects && idemRects.length ? idemRects : [rect];
   const out = {inserted: false};
   const now = new Date();
 
@@ -82,7 +83,7 @@ export async function runDateTimeAction(ctx, rect) {
       .filter(el => el.type === TYPE_TEXT);
     for (const el of texts) {
       const r = elementRect(el);
-      if (r && rectsIntersect(r, rect)) {
+      if (r && zonesToCheck.some(z => rectsIntersect(r, z))) {
         log(
           `DATETIME: existing text element in zone (${JSON.stringify(r)}) — skipping.`,
         );

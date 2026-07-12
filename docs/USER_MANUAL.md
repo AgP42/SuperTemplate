@@ -1,6 +1,6 @@
 # SuperTemplate — User Manual
 
-*Version 0.10.0 — for Supernote devices with plugin support (tested on A5 X and Manta).*
+*Version 0.10.3 — for Supernote devices with plugin support (tested on A5 X and Manta).*
 
 SuperTemplate automates the header of your note pages: **double-tap the S logo**
 printed on the template and the plugin stamps the current date & time, then
@@ -112,6 +112,14 @@ Everything lives in `MyStyle/Plugins/SuperTemplate/`:
   date*).
 - **Plugin missing from the toolbar**: uninstall then reinstall the plugin
   (Settings → Apps → Plugins).
+
+## Notes created on another device
+
+Pages created on a smaller device (e.g. A5 X notes opened on a Manta) are
+displayed 1:1 and centered — the plugin handles this automatically since
+v0.10.3: double-tap the S logo where you see it. Pages created on a LARGER
+device are not supported yet; the plugin tells you so with a small popup
+and does nothing.
 
 ## Known issue: screen flashing during processing (system bug)
 

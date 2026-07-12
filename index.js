@@ -6,6 +6,7 @@
  */
 
 import {AppRegistry, Dimensions, Image, NativeModules, PixelRatio} from 'react-native';
+import {screenPx} from './src/utils/screen';
 import {PluginManager} from 'sn-plugin-lib';
 import App from './App';
 import {name as appName} from './app.json';
@@ -36,27 +37,40 @@ const triggerPipeline = async source => {
   }
 };
 
-/**
- * Screen size in raw PIXELS. Motion events are raw px while Dimensions is
- * dp — ALWAYS multiply by PixelRatio (a density-1 device has ratio 1, so
- * the multiplication is a no-op there). A "looks like px already" guard
- * broke the Manta: 1024 dp × 1.875 = 1920 px, and 1024 tripped the guard.
- */
-const screenPx = () => {
-  const {width, height} = Dimensions.get('screen');
-  const r = PixelRatio.get();
-  return {width: width * r, height: height * r};
-};
 
-/** Hit-test the S-logo trigger zone (screen ratios — no page mapping). */
+/** Page sizes of other Supernote models: their notes are displayed 1:1,
+ * horizontally centered and top-anchored on this device, so their printed
+ * S logo sits at a shifted position the trigger must also listen to. */
+const ALT_PAGE_SIZES = [{width: 1404, height: 1872}, {width: 1920, height: 2560}];
+
+const inRect = (x, y, r) =>
+  x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+
+/** Hit-test the S-logo trigger zone: native position (screen ratios) plus
+ * the offset position of every known smaller page size. */
 const isInsideTriggerZone = (x, y) => {
   const {width, height} = screenPx();
-  return (
-    x >= TRIGGER_SCREEN_ZONE.left * width &&
-    x <= TRIGGER_SCREEN_ZONE.right * width &&
-    y >= TRIGGER_SCREEN_ZONE.top * height &&
-    y <= TRIGGER_SCREEN_ZONE.bottom * height
-  );
+  const zones = [
+    {
+      left: TRIGGER_SCREEN_ZONE.left * width,
+      top: TRIGGER_SCREEN_ZONE.top * height,
+      right: TRIGGER_SCREEN_ZONE.right * width,
+      bottom: TRIGGER_SCREEN_ZONE.bottom * height,
+    },
+  ];
+  for (const p of ALT_PAGE_SIZES) {
+    if (p.width >= width - 2) {
+      continue; // same size or larger than this screen — no offset variant
+    }
+    const offX = Math.round((width - p.width) / 2);
+    zones.push({
+      left: TRIGGER_SCREEN_ZONE.left * p.width + offX,
+      top: TRIGGER_SCREEN_ZONE.top * p.height,
+      right: TRIGGER_SCREEN_ZONE.right * p.width + offX,
+      bottom: TRIGGER_SCREEN_ZONE.bottom * p.height,
+    });
+  }
+  return zones.some(r => inRect(x, y, r));
 };
 
 const detector = createDoubleTapDetector({isInside: isInsideTriggerZone});

@@ -1,6 +1,7 @@
 import {PluginCommAPI, PluginNoteAPI} from 'sn-plugin-lib';
 import {HEADING_FONTS} from '../config';
 import {classifyMarkup, styleForMarkup} from '../utils/markup';
+import {toast} from '../utils/toast';
 import {log} from '../utils/logger';
 
 /** Extract a stroke bounding box from a materialized element (multi-path —
@@ -176,9 +177,25 @@ export async function runHeadingAction(ctx, rect) {
       // selection — replacing would destroy it. Keep the handwriting.
       log('HEADING: text box in selection — skipping OCR replacement to protect it.');
     }
+    const looksLikeTitle =
+      !!out.ocrText &&
+      out.ocrText.trim().split('\n').length <= 2 &&
+      out.strokeNums.length <= 40;
+    if (ctx.config.headingOcr && out.ocrText && !looksLikeTitle) {
+      // ANTI-CARNAGE guard: a title is one short line — a selection that
+      // recognizes to many lines or dozens of strokes means the lasso
+      // caught page content (seen on scaled pages). Never delete that.
+      log(
+        `HEADING: selection does not look like a title (${out.ocrText.trim().split('\n').length} line(s), ${out.strokeNums.length} strokes) — OCR replacement refused.`,
+      );
+      toast(
+        'SuperTemplate: selection looks bigger than a title — OCR replacement skipped for safety.',
+      );
+    }
     if (
       ctx.config.headingOcr &&
       out.ocrText &&
+      looksLikeTitle &&
       (counts.normalTextBoxNum || 0) === 0
     ) {
       // Close the current lasso cleanly (not consumed yet — this succeeds),

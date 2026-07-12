@@ -1,5 +1,7 @@
 import {PluginCommAPI, PluginFileAPI, PluginNoteAPI} from 'sn-plugin-lib';
 import {zoneToRect} from './zones';
+import {screenPx} from './utils/screen';
+import {toast} from './utils/toast';
 import {loadConfig, getActiveZones} from './config';
 import {runHeadingAction} from './actions/HeadingAction';
 import {runDateTimeAction} from './actions/DateTimeAction';
@@ -173,18 +175,56 @@ export async function runHeaderActions() {
       log(`pageSnapshot START failed: ${e.message}`);
     }
 
-    const titleRect = zoneToRect(zones.title, ctx.pageSize);
-    const datetimeRect = zoneToRect(zones.datetime, ctx.pageSize);
+    // DISPLAY MODEL (proven by field data, 2026-07-11): pages created for a
+    // SMALLER screen are displayed 1:1, horizontally centered and top-
+    // anchored — and the lasso/insert APIs work in DISPLAY coordinates =
+    // page coordinates + ((screenW - pageW) / 2, 0). Larger-than-screen
+    // pages remain unsupported (refused with a toast).
+    const screen = screenPx();
+    const smaller =
+      screen.width - ctx.pageSize.width > 2 ||
+      screen.height - ctx.pageSize.height > 2;
+    const larger =
+      ctx.pageSize.width - screen.width > 2 ||
+      ctx.pageSize.height - screen.height > 2;
+    if (larger) {
+      log(
+        `ABORT: page ${ctx.pageSize.width}x${ctx.pageSize.height} larger than screen ${Math.round(screen.width)}x${Math.round(screen.height)} — unsupported display mode.`,
+      );
+      toast(
+        'SuperTemplate: this page was created for a larger device — not supported on this screen yet.',
+      );
+      return;
+    }
+    const off = smaller
+      ? {x: Math.round((screen.width - ctx.pageSize.width) / 2), y: 0}
+      : {x: 0, y: 0};
+    const shift = r => ({
+      left: r.left + off.x,
+      top: r.top + off.y,
+      right: r.right + off.x,
+      bottom: r.bottom + off.y,
+    });
+    const titlePage = zoneToRect(zones.title, ctx.pageSize);
+    const datetimePage = zoneToRect(zones.datetime, ctx.pageSize);
+    const titleRect = shift(titlePage);
+    const datetimeRect = shift(datetimePage);
     log(
-      `zones: title=${JSON.stringify(titleRect)} datetime=${JSON.stringify(
-        datetimeRect,
-      )}`,
+      `coords: page=${ctx.pageSize.width}x${ctx.pageSize.height} screen=${Math.round(screen.width)}x${Math.round(screen.height)} offset=(${off.x},${off.y})`,
+    );
+    log(
+      `zones: title=${JSON.stringify(titleRect)} datetime=${JSON.stringify(datetimeRect)}`,
     );
 
     const heading = await runHeadingAction(ctx, titleRect);
     log(`HEADING result: ${JSON.stringify(heading)}`);
 
-    const datetime = await runDateTimeAction(ctx, datetimeRect);
+    // Idempotence must also see stamps stored in un-shifted page coords
+    // (elements inserted before the offset model, or by other tools).
+    const datetime = await runDateTimeAction(ctx, datetimeRect, [
+      datetimeRect,
+      datetimePage,
+    ]);
     log(`DATETIME result: ${JSON.stringify(datetime)}`);
 
     try {
