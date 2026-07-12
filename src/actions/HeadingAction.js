@@ -1,4 +1,4 @@
-import {PluginCommAPI, PluginNoteAPI} from 'sn-plugin-lib';
+import {PluginCommAPI, PluginFileAPI, PluginNoteAPI} from 'sn-plugin-lib';
 import {HEADING_FONTS} from '../config';
 import {classifyMarkup, styleForMarkup} from '../utils/markup';
 import {toast} from '../utils/toast';
@@ -47,10 +47,14 @@ function strokeBBox(m) {
  * setLassoBoxState(2) after it fails with code 904.
  *
  * @param {{path:string,pageNum:number,pageSize:{width:number,height:number},config:object}} ctx
- * @param {{left:number,top:number,right:number,bottom:number}} rect Pixel rect of the title zone.
+ * @param {{lasso:object, insert:object}} rects Title-zone rects: `lasso` in
+ *   PAGE coordinates (full-containment selection, clamped to the page,
+ *   extended below the box for descending handwriting), `insert` in DISPLAY
+ *   coordinates (page + centering offset) for insertText.
  * @returns {Promise<{converted:boolean, ocrText:string|null, strokeNums:number[], deleteHandwriting:boolean}>}
  */
-export async function runHeadingAction(ctx, rect) {
+export async function runHeadingAction(ctx, rects) {
+  const rect = rects.insert;
   const out = {
     converted: false,
     ocrText: null,
@@ -60,16 +64,8 @@ export async function runHeadingAction(ctx, rect) {
     markupStyle: 0,
   };
 
-  // The title box starts only ~4 px below the datetime zone on the template:
-  // a full-rect lasso would also grab the date text box. Select from 15%
-  // below the top edge so only the box's content is captured.
   const h = rect.bottom - rect.top;
-  const lassoRect = {
-    left: rect.left,
-    top: rect.top + Math.round(h * 0.15),
-    right: rect.right,
-    bottom: rect.bottom,
-  };
+  const lassoRect = rects.lasso;
 
   const lassoRes = await PluginCommAPI.lassoElements(lassoRect);
   log(`lassoElements(${JSON.stringify(lassoRect)}) → ${JSON.stringify(lassoRes)}`);

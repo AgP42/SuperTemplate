@@ -1,6 +1,6 @@
 # SuperTemplate — User Manual
 
-*Version 0.10.3 — for Supernote devices with plugin support (tested on A5 X and Manta).*
+*Version 0.10.5 — for Supernote devices with plugin support (tested on A5 X and Manta).*
 
 SuperTemplate automates the header of your note pages: **double-tap the S logo**
 printed on the template and the plugin stamps the current date & time, then

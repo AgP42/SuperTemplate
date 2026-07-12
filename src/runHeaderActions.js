@@ -207,16 +207,36 @@ export async function runHeaderActions() {
     });
     const titlePage = zoneToRect(zones.title, ctx.pageSize);
     const datetimePage = zoneToRect(zones.datetime, ctx.pageSize);
-    const titleRect = shift(titlePage);
+    // LASSO rules (probe-proven 2026-07-12): PAGE coordinates, FULL
+    // containment of strokes, and the rect is rejected outright if it
+    // exceeds the page bounds. So the lasso rect is page-based, extended
+    // downward (handwriting descends below the box — 4/6 strokes were
+    // missed for that) but stopped above the first ruled line, and clamped
+    // to the page. INSERT rules: DISPLAY coordinates (page + offset).
+    const boxH = titlePage.bottom - titlePage.top;
+    const titleLasso = {
+      left: Math.max(0, titlePage.left),
+      top: titlePage.top + Math.round(boxH * 0.15),
+      right: Math.min(ctx.pageSize.width, titlePage.right),
+      bottom: Math.min(
+        titlePage.bottom + Math.round(boxH * 0.45),
+        Math.round(ctx.pageSize.height * 0.152), // above the first ruled line
+        ctx.pageSize.height,
+      ),
+    };
+    const titleRect = shift(titlePage); // display basis, for text inserts
     const datetimeRect = shift(datetimePage);
     log(
       `coords: page=${ctx.pageSize.width}x${ctx.pageSize.height} screen=${Math.round(screen.width)}x${Math.round(screen.height)} offset=(${off.x},${off.y})`,
     );
     log(
-      `zones: title=${JSON.stringify(titleRect)} datetime=${JSON.stringify(datetimeRect)}`,
+      `zones: titleLasso=${JSON.stringify(titleLasso)} titleInsert=${JSON.stringify(titleRect)} datetime=${JSON.stringify(datetimeRect)}`,
     );
 
-    const heading = await runHeadingAction(ctx, titleRect);
+    const heading = await runHeadingAction(ctx, {
+      lasso: titleLasso,
+      insert: titleRect,
+    });
     log(`HEADING result: ${JSON.stringify(heading)}`);
 
     // Idempotence must also see stamps stored in un-shifted page coords
