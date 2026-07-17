@@ -7,21 +7,26 @@
 heading and stamps the current date & time — on a ready-made note template.**
 
 SuperTemplate is a plugin for Supernote e-ink devices (tested on A5 X and
-Manta). It ships a note template with a title box and a datetime slot; write
-your title, **double-tap the S logo with your finger**, and the plugin:
+Manta). It ships note templates (black, light or no logo) with a title box
+and a datetime slot; write your title on the guide line, **double-tap the
+logo area with your finger**, and the plugin:
 
 - stamps the current date & time (4 formats x 5 languages, size options),
 - registers an invisible date keyword so the page is findable via
   Supernote's search (format configurable, can be turned off),
-- converts your handwritten title into a **native heading** (visible in the
-  note's table of contents) — either keeping your handwriting (4 native
-  styles) or replacing it with typed text via **on-device OCR** (font and
-  size configurable),
+- converts your title into a **native heading** (visible in the note's
+  table of contents) — your handwriting is taken **whole**, even letters
+  sticking out of the box; typed text boxes work too,
+- either keeps your handwriting (4 native styles) or replaces it with typed
+  text via **on-device OCR** — sizes up to 180 on the Supernote scale, your
+  own fonts from `MyStyle/fonts`,
 - and lets you **pick the heading style with the pen**: underline or
   double-underline your title to switch styles on the fly (mapping
   configurable).
 
-Everything runs on-device. No cloud, no network, no account.
+Always active once installed — no app to open. Re-triggering a finished
+page does nothing (real idempotence), and every refusal is explained with a
+popup. Everything runs on-device. No cloud, no network, no account.
 
 ![Result](docs/images/01-result.png)
 
@@ -33,10 +38,10 @@ Everything runs on-device. No cloud, no network, no account.
 2. On the device: **Settings → Apps → Plugins → Add Plugin** → select
    `supertemplate`.
 3. Open a note, open the toolbar plugin menu, tap **SuperTemplate** and use
-   **Install / update template** — the bundled template page lands in
-   MyStyle.
-4. Create a note page with the `SuperTemplate_simpleNote` template and
-   enjoy.
+   **Install / update templates** — the three bundled template pages land
+   in MyStyle.
+4. Create a note page with one of the `SuperTemplate_simpleNote` templates
+   and enjoy.
 
 Full instructions, settings reference and troubleshooting:
 [User Manual](docs/USER_MANUAL.md).
@@ -46,9 +51,11 @@ Full instructions, settings reference and troubleshooting:
 While the plugin runs, the page flashes several times and old lasso-copied
 content may briefly reappear. This is a **firmware bug** — the note app
 spontaneously pastes its lasso copy buffer during any plugin lasso
-operation — [reported here and confirmed by Ratta](https://www.reddit.com/r/Supernote_dev/comments/1uodbvo/),
-a fix is in the works. SuperTemplate detects and removes the ghost content
-automatically; the extra flashing is that cleanup at work.
+operation, and can even hijack the heading conversion —
+[reported here and confirmed by Ratta](https://www.reddit.com/r/Supernote_dev/comments/1uodbvo/),
+a fix is in the works. SuperTemplate defuses it end to end: ghost content
+is removed and a hijacked conversion is repaired on the fly; the extra
+flashing is that cleanup at work.
 
 The plugin also works around a second firmware bug it reported:
 [PluginHost never deletes old plugin versions](https://www.reddit.com/r/Supernote_dev/comments/1uo2y0g/)

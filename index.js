@@ -20,8 +20,6 @@ import {log, flushLog, markT0} from './src/utils/logger';
 const BUTTON_ID = 100;
 let running = false;
 
-let traceUntil = 0;
-
 const triggerPipeline = async source => {
   if (running) {
     return;
@@ -29,7 +27,6 @@ const triggerPipeline = async source => {
   running = true;
   try {
     markT0();
-    traceUntil = Date.now() + 2000;
     log(`trigger (${source})`);
     await runHeaderActions();
   } finally {
@@ -81,14 +78,6 @@ const onMotionMsg = msg => {
   try {
     const p = (msg.pointers && msg.pointers[0]) || msg;
     const tool = p.toolType != null ? p.toolType : msg.toolType;
-    // Diagnostic: trace every event the system processes right after the
-    // trigger — shows whether taps are still being resolved while our
-    // lasso is active (paste-race hypothesis).
-    if (Date.now() < traceUntil && msg.action !== 2) {
-      log(
-        `motion trace: action=${msg.action} tool=${tool} x=${Math.round(p.x != null ? p.x : msg.x)} y=${Math.round(p.y != null ? p.y : msg.y)}`,
-      );
-    }
     if (tool !== 1) {
       return; // finger only — never trigger from the EMR pen
     }
@@ -199,7 +188,7 @@ const boot = async () => {
       log(`registerButton FAILED: ${e.message}`);
     }
 
-    // Double-tap trigger on the template's S logo (top-right corner).
+    // Double-tap trigger on the template's S logo (left of the title box).
     try {
       if (typeof PluginManager.registerMotionListener === 'function') {
         PluginManager.registerMotionListener(1, {onMsg: onMotionMsg});

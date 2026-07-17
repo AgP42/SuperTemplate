@@ -16,6 +16,11 @@ import {log, flushLog} from './utils/logger';
 async function pageSnapshot(ctx, label) {
   const res = await PluginFileAPI.getElements(ctx.pageNum, ctx.path);
   const els = (res && Array.isArray(res.result) && res.result) || [];
+  if (els.length === 0) {
+    log(
+      `getElements raw (empty) → ${JSON.stringify(res).slice(0, 200)}`,
+    );
+  }
   const byType = {};
   for (const el of els) {
     let t = el.type;
@@ -49,7 +54,7 @@ async function elementNums(ctx, label) {
  * more strokes than the measured stroke-count delta — any inconsistency
  * aborts with a log instead of deleting.
  */
-async function removeParasiteStrokes(ctx, numsBefore, strokesBefore, extraNums) {
+async function removeParasiteStrokes(ctx, numsBefore, strokesBefore, extraNums, selfDeleted, heading) {
   try {
     const after = await pageSnapshot(ctx, 'END');
     const numsAfter = await elementNums(ctx, 'END');
@@ -63,17 +68,32 @@ async function removeParasiteStrokes(ctx, numsBefore, strokesBefore, extraNums) 
       return;
     }
     const parasites = [];
+    const newTitleNums = [];
+    let newTitleTextNum = null; // fresh text box sitting in the title box
     for (const n of candidates) {
       try {
         const elRes = await PluginFileAPI.getElement(ctx.path, ctx.pageNum, n);
         const el = elRes && elRes.result;
-        let type = el && el.type;
+        let m = null;
         try {
-          type = JSON.parse(JSON.stringify(el)).type;
+          m = JSON.parse(JSON.stringify(el));
         } catch (_) {}
+        const type = m ? m.type : el && el.type;
         log(`paste-guard: new element num=${n} type=${type}`);
         if (type === 0) {
           parasites.push(n);
+        } else if (type === 100) {
+          newTitleNums.push(n);
+        } else if (
+          type === 500 &&
+          newTitleTextNum == null &&
+          m &&
+          m.textBox &&
+          m.textBox.textRect &&
+          ctx.titleBoxPage &&
+          rectsTouch(m.textBox.textRect, ctx.titleBoxPage, ctx.displayOff)
+        ) {
+          newTitleTextNum = n; // the OCR-inserted heading text
         }
         try {
           if (el && typeof el.recycle === 'function') {
@@ -85,24 +105,67 @@ async function removeParasiteStrokes(ctx, numsBefore, strokesBefore, extraNums) 
       }
     }
     // Hard safety cap: ghost candidates may not exceed the strokes that
-    // APPEARED during the pipeline. On inconsistency, ghosts are kept
-    // (never guess) — the feature deletion (extras) still proceeds.
+    // APPEARED during the pipeline — counting the ones WE deleted midway
+    // (OCR replaces ink before this pass runs), or real ghosts sneak
+    // under the cap. On inconsistency, ghosts are kept (never guess) —
+    // the feature deletion (extras) still proceeds.
     let ghosts = parasites;
-    const strokesAfter = (after.byType && after.byType[0]) || 0;
-    const delta = strokesAfter - strokesBefore;
+    let strokesAfter = (after.byType && after.byType[0]) || 0;
+    if (strokesAfter === 0 && Array.isArray(ctx.pageScan)) {
+      // Bulk getElements is broken on this page (see the fallback scan);
+      // the per-num type checks above are the ground truth here.
+      strokesAfter = strokesBefore + parasites.length;
+    }
+    const delta = strokesAfter - strokesBefore + (selfDeleted || 0);
     if (ghosts.length > Math.max(0, delta)) {
       log(
         `paste-guard: ABORT ghosts — ${ghosts.length} candidate(s) but stroke delta is ${delta}; keeping them.`,
       );
       ghosts = [];
     }
+    // ── THE END CONTRACT ─────────────────────────────────────────────────
+    // Whatever happened during the pipeline (buffer hijack, stale
+    // coordinates, lasso oddities), the created heading must contain
+    // EXACTLY what the user meant: the intended strokes (handwritten
+    // mode) or the title text box (OCR / typed mode). Every new title is
+    // verified; a wrong one is repointed (modifyElements, file-level) or,
+    // failing that, deleted — never a monster heading, never an empty
+    // recap entry.
     const deleteList = [...extras, ...ghosts];
+    let repaired = 0;
+    let cancelled = 0;
+    if (heading) {
+      for (const tn of newTitleNums) {
+        const verdict = await verifyTitleContract(
+          ctx,
+          tn,
+          heading,
+          newTitleTextNum,
+        );
+        if (verdict === 'repaired') {
+          repaired++;
+        } else if (verdict === 'delete') {
+          deleteList.push(tn);
+          cancelled++;
+        }
+      }
+      if (cancelled > 0) {
+        heading.converted = false;
+        toast(
+          'SuperTemplate: the conversion went wrong (firmware) — the page was cleaned, no heading applied. Trigger again.',
+        );
+      }
+    }
     if (deleteList.length === 0) {
       log('paste-guard: nothing to delete.');
+      if (repaired > 0) {
+        const reload = await PluginCommAPI.reloadFile();
+        log(`contract-repair reloadFile → ${JSON.stringify(reload)}`);
+      }
       return;
     }
     log(
-      `cleanup: deleting ${extras.length} handwriting + ${ghosts.length} ghost stroke(s) (nums ${JSON.stringify(deleteList)})`,
+      `cleanup: deleting ${extras.length} handwriting + ${ghosts.length} ghost stroke(s) + ${cancelled} title(s) (nums ${JSON.stringify(deleteList)})`,
     );
     const delRes = await PluginFileAPI.deleteElements(
       ctx.path,
@@ -112,8 +175,172 @@ async function removeParasiteStrokes(ctx, numsBefore, strokesBefore, extraNums) 
     log(`deleteElements → ${JSON.stringify(delRes)}`);
     const reload = await PluginCommAPI.reloadFile();
     log(`reloadFile → ${JSON.stringify(reload)}`);
+    if (newTitleNums.length > 0) {
+      try {
+        const tRes = await PluginFileAPI.getTitles(ctx.path, [ctx.pageNum]);
+        const count =
+          (tRes && Array.isArray(tRes.result) && tRes.result.length) || 0;
+        log(`post-cleanup getTitles → ${count} title(s) on page.`);
+      } catch (e) {
+        log(`post-cleanup getTitles failed: ${e.message}`);
+      }
+    }
   } catch (e) {
     log(`paste-guard failed: ${e.message}`);
+  }
+}
+
+/**
+ * Materialize every listed element via per-num getElement (plain JSON
+ * clones, natives recycled). Fallback for pages where bulk getElements
+ * returns empty.
+ */
+async function scanByNums(ctx, nums) {
+  const out = [];
+  for (const n of nums) {
+    try {
+      const elRes = await PluginFileAPI.getElement(ctx.path, ctx.pageNum, n);
+      const el = elRes && elRes.result;
+      if (el) {
+        try {
+          const m = JSON.parse(JSON.stringify(el));
+          if (m && m.type != null) {
+            if (m.numInPage == null) {
+              m.numInPage = n;
+            }
+            out.push(m);
+          }
+        } catch (_) {}
+        try {
+          if (typeof el.recycle === 'function') {
+            el.recycle();
+          }
+        } catch (_) {}
+      }
+    } catch (_) {}
+  }
+  return out;
+}
+
+/** Overlap test tolerant to the display offset of foreign pages. */
+function rectsTouch(a, b, off) {
+  const o = off || {x: 0, y: 0};
+  const hit = (r, s) =>
+    !(
+      s.left > r.right ||
+      s.right < r.left ||
+      s.top > r.bottom ||
+      s.bottom < r.top
+    );
+  return (
+    hit(a, b) ||
+    hit(a, {
+      left: b.left + o.x,
+      top: b.top + o.y,
+      right: b.right + o.x,
+      bottom: b.bottom + o.y,
+    })
+  );
+}
+
+/** Set equality over element-num arrays. */
+function sameNums(a, b) {
+  if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) {
+    return false;
+  }
+  const s = new Set(a);
+  return b.every(n => s.has(n));
+}
+
+/**
+ * THE END CONTRACT, per created title: its members must be exactly the
+ * intended ones — the user's title strokes (handwritten mode) or the
+ * title text box (OCR / typed mode). Anything else (buffer hijack, stale
+ * page coordinates, lasso oddities — the cause does not matter) gets the
+ * title REPOINTED at file level; if the firmware refuses, the title is
+ * handed back for deletion.
+ * @returns {Promise<'healthy'|'repaired'|'delete'>}
+ */
+async function verifyTitleContract(ctx, titleNum, heading, newTitleTextNum) {
+  let el = null;
+  try {
+    // What the heading SHOULD contain.
+    let expected =
+      Array.isArray(heading.intendedNums) && heading.intendedNums.length > 0
+        ? heading.intendedNums
+        : null;
+    let expectText = false;
+    if (!expected && heading.titleTextNum != null) {
+      expected = [heading.titleTextNum];
+      expectText = true;
+    }
+    if (!expected && newTitleTextNum != null) {
+      expected = [newTitleTextNum];
+      expectText = true;
+    }
+
+    const elRes = await PluginFileAPI.getElement(ctx.path, ctx.pageNum, titleNum);
+    el = elRes && elRes.result;
+    if (!el) {
+      log(`contract: getElement(${titleNum}) returned nothing.`);
+      return 'healthy';
+    }
+    let m = null;
+    try {
+      m = JSON.parse(JSON.stringify(el));
+    } catch (_) {}
+    const ctn =
+      (m && m.title && Array.isArray(m.title.controlTrailNums)
+        ? m.title.controlTrailNums
+        : []) || [];
+    log(
+      `contract: title ${titleNum} members ${JSON.stringify(ctn.slice(0, 30))}, expected ${expected ? JSON.stringify(expected.slice(0, 30)) : 'unknown'}.`,
+    );
+
+    if (!expected) {
+      log('contract: no intent recorded — leaving the title alone.');
+      return 'healthy';
+    }
+    if (sameNums(ctn, expected)) {
+      log('contract: fulfilled.');
+      return 'healthy';
+    }
+    if (expectText && ctn.length === 0) {
+      // Text titles may legitimately carry no controlTrailNums — the
+      // firmware shape for them is still unconfirmed. Observe, don't touch.
+      log('contract: text title with no members — assumed healthy (telemetry).');
+      return 'healthy';
+    }
+
+    // Contract violation → repoint to the intent.
+    const rect = heading.fittedRect;
+    try {
+      el.title.controlTrailNums = expected;
+      if (rect) {
+        el.title.X = rect.left;
+        el.title.Y = rect.top;
+        el.title.width = rect.right - rect.left;
+        el.title.height = rect.bottom - rect.top;
+      }
+    } catch (_) {}
+    const res = await PluginFileAPI.modifyElements(ctx.path, ctx.pageNum, [el]);
+    log(
+      `contract: REPOINTED title ${titleNum} (${ctn.length} → ${expected.length} member(s)) → ${JSON.stringify(res)}`,
+    );
+    if (res && res.success === true) {
+      return 'repaired';
+    }
+    log('contract: repoint refused — the title will be deleted.');
+    return 'delete';
+  } catch (e) {
+    log(`contract verification failed: ${e.message}`);
+    return 'healthy';
+  } finally {
+    try {
+      if (el && typeof el.recycle === 'function') {
+        el.recycle();
+      }
+    } catch (_) {}
   }
 }
 
@@ -174,6 +401,23 @@ export async function runHeaderActions() {
     } catch (e) {
       log(`pageSnapshot START failed: ${e.message}`);
     }
+    ctx.numsAtStart = numsBefore; // paste-intercept baseline (HeadingAction)
+
+    // Some pages return EMPTY from bulk getElements while per-num
+    // getElement works fine (field case 2026-07-15, PM workshops p85,
+    // ~150 elements): without this fallback the title scan sees no
+    // strokes (fragmented mini-title) and the date guard sees no texts
+    // (stamps stack). Rebuild the scan element by element and share it.
+    if (strokesBefore === 0 && numsBefore.length > 0) {
+      log(
+        `getElements EMPTY with ${numsBefore.length} element(s) listed — per-element fallback scan.`,
+      );
+      ctx.pageScan = await scanByNums(ctx, numsBefore);
+      strokesBefore = ctx.pageScan.filter(m => m.type === 0).length;
+      log(
+        `fallback scan: ${ctx.pageScan.length} element(s) materialized, ${strokesBefore} stroke(s).`,
+      );
+    }
 
     // DISPLAY MODEL (proven by field data, 2026-07-11): pages created for a
     // SMALLER screen are displayed 1:1, horizontally centered and top-
@@ -207,36 +451,13 @@ export async function runHeaderActions() {
     });
     const titlePage = zoneToRect(zones.title, ctx.pageSize);
     const datetimePage = zoneToRect(zones.datetime, ctx.pageSize);
-    // LASSO rules (probe-proven 2026-07-12): PAGE coordinates, FULL
-    // containment of strokes, and the rect is rejected outright if it
-    // exceeds the page bounds. So the lasso rect is page-based, extended
-    // downward (handwriting descends below the box — 4/6 strokes were
-    // missed for that) but stopped above the first ruled line, and clamped
-    // to the page. INSERT rules: DISPLAY coordinates (page + offset).
-    const boxH = titlePage.bottom - titlePage.top;
-    const titleLasso = {
-      left: Math.max(0, titlePage.left),
-      top: titlePage.top + Math.round(boxH * 0.15),
-      right: Math.min(ctx.pageSize.width, titlePage.right),
-      bottom: Math.min(
-        titlePage.bottom + Math.round(boxH * 0.45),
-        Math.round(ctx.pageSize.height * 0.152), // above the first ruled line
-        ctx.pageSize.height,
-      ),
-    };
-    const titleRect = shift(titlePage); // display basis, for text inserts
+    // Inserts use DISPLAY coordinates (page + centering offset on foreign
+    // pages); the title selection is fitted to the ink anchored on the box
+    // (see HeadingAction).
     const datetimeRect = shift(datetimePage);
-    log(
-      `coords: page=${ctx.pageSize.width}x${ctx.pageSize.height} screen=${Math.round(screen.width)}x${Math.round(screen.height)} offset=(${off.x},${off.y})`,
-    );
-    log(
-      `zones: titleLasso=${JSON.stringify(titleLasso)} titleInsert=${JSON.stringify(titleRect)} datetime=${JSON.stringify(datetimeRect)}`,
-    );
-
-    const heading = await runHeadingAction(ctx, {
-      lasso: titleLasso,
-      insert: titleRect,
-    });
+    ctx.displayOff = off;
+    ctx.titleBoxPage = titlePage;
+    const heading = await runHeadingAction(ctx);
     log(`HEADING result: ${JSON.stringify(heading)}`);
 
     // Idempotence must also see stamps stored in un-shifted page coords
@@ -255,6 +476,8 @@ export async function runHeaderActions() {
       numsBefore,
       strokesBefore,
       heading.deleteHandwriting ? heading.strokeNums : [],
+      heading.selfDeleted || 0,
+      heading,
     );
 
     log(

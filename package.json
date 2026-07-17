@@ -1,6 +1,6 @@
 {
   "name": "supertemplate",
-  "version": "0.10.5",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "android": "react-native run-android",

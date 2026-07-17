@@ -38,7 +38,31 @@ export async function flushLog(header) {
   try {
     await RNFS.mkdir(LOG_DIR);
     await RNFS.appendFile(LOG_FILE, section, 'utf8');
+    await rotateIfHuge();
   } catch (e) {
     console.warn(`[SuperTemplate] log flush failed: ${e.message}`);
+  }
+}
+
+const MAX_LOG_BYTES = 512 * 1024;
+const KEEP_TAIL_BYTES = 128 * 1024;
+
+/** Keep the log file bounded: past 512 KB, keep only the last 128 KB. */
+async function rotateIfHuge() {
+  try {
+    const st = await RNFS.stat(LOG_FILE);
+    if (Number(st.size) <= MAX_LOG_BYTES) {
+      return;
+    }
+    const content = await RNFS.readFile(LOG_FILE, 'utf8');
+    const tail = content.slice(-KEEP_TAIL_BYTES);
+    const cut = tail.indexOf('\n--- '); // start at a section boundary
+    await RNFS.writeFile(
+      LOG_FILE,
+      `--- LOG ROTATED (kept the most recent sections) ---\n${cut >= 0 ? tail.slice(cut) : tail}`,
+      'utf8',
+    );
+  } catch (_) {
+    // rotation is best-effort — never block logging
   }
 }

@@ -20,12 +20,12 @@ export const FONT_SIZES = [
   {key: 'XL', value: 64},
 ];
 
-/** Font sizes offered for the OCR heading text. */
+/** Font sizes offered for the OCR heading text (Supernote text scale). */
 export const HEADING_FONT_SIZES = [
-  {key: 'S', value: 36},
-  {key: 'M', value: 48},
-  {key: 'L', value: 60},
-  {key: 'XL', value: 72},
+  {key: 'S', value: 60},
+  {key: 'M', value: 90},
+  {key: 'L', value: 132},
+  {key: 'XL', value: 180},
 ];
 
 /** Font choices for the OCR heading text (system font file paths). */
@@ -34,6 +34,37 @@ export const HEADING_FONTS = [
   {key: 'serif', label: 'Serif', path: '/system/fonts/NotoSerif-Regular.ttf'},
   {key: 'mono', label: 'Mono', path: '/system/fonts/DroidSansMono.ttf'},
 ];
+
+/** User font folder — .ttf/.otf dropped here appear as OCR font choices. */
+export const USER_FONTS_DIR = `${RNFS.ExternalStorageDirectoryPath}/MyStyle/fonts`;
+
+/**
+ * Resolve the configured heading font to a file path: built-in key, or a
+ * .ttf/.otf filename from MyStyle/fonts (user font). Null = system default.
+ */
+export function resolveHeadingFontPath(key) {
+  const builtin = HEADING_FONTS.find(f => f.key === (key || 'default'));
+  if (builtin) {
+    return builtin.path;
+  }
+  if (key && /\.(ttf|otf)$/i.test(key)) {
+    return `${USER_FONTS_DIR}/${key}`;
+  }
+  return null;
+}
+
+/** List the user's .ttf/.otf files in MyStyle/fonts (empty if none). */
+export async function listUserFonts() {
+  try {
+    const items = await RNFS.readDir(USER_FONTS_DIR);
+    return items
+      .filter(i => i.isFile() && /\.(ttf|otf)$/i.test(i.name))
+      .map(i => i.name)
+      .sort();
+  } catch (_) {
+    return [];
+  }
+}
 
 /** setLassoTitle style codes — the 4 native Supernote heading renderings. */
 export const HEADING_STYLES = [
@@ -59,11 +90,17 @@ export const DEFAULT_CONFIG = {
   styleUnderline: 2,
   styleDoubleUnderline: 4,
   headingOcr: false,
-  headingFontSize: 48,
+  headingFontSize: 90,
   headingFont: 'default',
   logging: false,
   activeTemplate: 'SuperTemplate_simpleNote',
-  templates: [{name: 'SuperTemplate_simpleNote', zones: ZONES}],
+  // The three variants share the same layout, hence the same zones — they
+  // differ only in the printed logo (black / light gray / none).
+  templates: [
+    {name: 'SuperTemplate_simpleNote', zones: ZONES},
+    {name: 'SuperTemplate_simpleNote_logoLight', zones: ZONES},
+    {name: 'SuperTemplate_simpleNote_noLogo', zones: ZONES},
+  ],
 };
 
 let cached = null;
@@ -94,6 +131,14 @@ export async function loadConfig() {
     if (await RNFS.exists(file)) {
       const raw = await RNFS.readFile(file, 'utf8');
       cached = {...DEFAULT_CONFIG, ...JSON.parse(raw)};
+      // A saved config's `templates` replaces the defaults wholesale —
+      // graft in any built-in template the file predates.
+      const known = new Set((cached.templates || []).map(t => t.name));
+      for (const t of DEFAULT_CONFIG.templates) {
+        if (!known.has(t.name)) {
+          cached.templates = [...(cached.templates || []), t];
+        }
+      }
       if (file === LEGACY_CONFIG_FILE) {
         await saveConfig(cached); // migrate to the new folder
       }

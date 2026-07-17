@@ -9,6 +9,8 @@ import {log} from './utils/logger';
  */
 const BUNDLED_TEMPLATES = [
   {name: 'SuperTemplate_simpleNote.png', asset: require('../assets/templates/SuperTemplate_simpleNote.png')},
+  {name: 'SuperTemplate_simpleNote_logoLight.png', asset: require('../assets/templates/SuperTemplate_simpleNote_logoLight.png')},
+  {name: 'SuperTemplate_simpleNote_noLogo.png', asset: require('../assets/templates/SuperTemplate_simpleNote_noLogo.png')},
 ];
 
 const DEST_DIR = `${RNFS.ExternalStorageDirectoryPath}/MyStyle`;

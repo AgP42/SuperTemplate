@@ -1,68 +1,18 @@
-import {DeviceEventEmitter, NativeModules} from 'react-native';
-import {log} from './utils/logger';
+import {NativeModules} from 'react-native';
 
 const {FloatingBubble} = NativeModules;
 
-/** Whether the native bubble module was loaded by PluginHost. */
-export function bubbleAvailable() {
-  return !!FloatingBubble;
-}
-
-export async function bubbleHasPermission() {
-  if (!FloatingBubble) {
-    return false;
-  }
-  try {
-    return await FloatingBubble.checkOverlayPermission();
-  } catch (e) {
-    log(`checkOverlayPermission failed: ${e.message}`);
-    return false;
-  }
-}
-
-export function bubbleRequestPermission() {
-  if (FloatingBubble) {
-    FloatingBubble.requestOverlayPermission();
-  }
-}
-
-export function bubbleShow() {
-  if (FloatingBubble) {
-    FloatingBubble.show();
-  }
-}
-
+/**
+ * Floating bubble — DEFENSIVE HIDE ONLY.
+ *
+ * The native module stays in the codebase (adapted from Inkling, MIT) but
+ * the bubble is never shown: every reinstall creates a new RN instance
+ * whose predecessor's overlay becomes an unremovable orphan (only a device
+ * reboot clears them), and it floats over ALL apps. bubbleHide() is called
+ * at boot to clear this instance's own bubble if one exists.
+ */
 export function bubbleHide() {
   if (FloatingBubble) {
     FloatingBubble.hide();
   }
-}
-
-export async function bubbleIsShowing() {
-  if (!FloatingBubble) {
-    return false;
-  }
-  try {
-    return await FloatingBubble.isShowing();
-  } catch (_) {
-    return false;
-  }
-}
-
-/**
- * Subscribe to bubble taps.
- * @param {() => void} onTap
- * @returns {{remove: () => void}}
- */
-export function bubbleOnTap(onTap) {
-  return DeviceEventEmitter.addListener('onBubbleTap', onTap);
-}
-
-/**
- * Subscribe to permission-denied events (show() without overlay permission).
- * @param {() => void} cb
- * @returns {{remove: () => void}}
- */
-export function bubbleOnPermissionDenied(cb) {
-  return DeviceEventEmitter.addListener('onBubblePermissionDenied', cb);
 }

@@ -13,8 +13,8 @@
   },
   "author": "AgP42",
   "iconPath": "assets/icon.png",
-  "versionName": "0.10.5",
-  "versionCode": "36",
+  "versionName": "1.0.0",
+  "versionCode": "69",
   "pluginID": "yl4k7839ugmxkc0c",
   "pluginKey": "supertemplate",
   "jsMainPath": "index"

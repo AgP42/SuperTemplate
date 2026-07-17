@@ -65,22 +65,30 @@ export async function runDateTimeAction(ctx, rect, idemRects) {
   const now = new Date();
 
   try {
-    const elsRes = await PluginFileAPI.getElements(ctx.pageNum, ctx.path);
-    const raw = (elsRes && Array.isArray(elsRes.result) && elsRes.result) || [];
-    const texts = raw
-      .map(el => {
-        let m = el;
-        try {
-          m = JSON.parse(JSON.stringify(el));
-        } catch (_) {}
-        try {
-          if (el && typeof el.recycle === 'function') {
-            el.recycle();
-          }
-        } catch (_) {}
-        return m;
-      })
-      .filter(el => el.type === TYPE_TEXT);
+    let texts;
+    if (Array.isArray(ctx.pageScan)) {
+      // Shared per-element fallback scan (bulk getElements empty on this
+      // page — see runHeaderActions).
+      texts = ctx.pageScan.filter(el => el.type === TYPE_TEXT);
+    } else {
+      const elsRes = await PluginFileAPI.getElements(ctx.pageNum, ctx.path);
+      const raw =
+        (elsRes && Array.isArray(elsRes.result) && elsRes.result) || [];
+      texts = raw
+        .map(el => {
+          let m = el;
+          try {
+            m = JSON.parse(JSON.stringify(el));
+          } catch (_) {}
+          try {
+            if (el && typeof el.recycle === 'function') {
+              el.recycle();
+            }
+          } catch (_) {}
+          return m;
+        })
+        .filter(el => el.type === TYPE_TEXT);
+    }
     for (const el of texts) {
       const r = elementRect(el);
       if (r && zonesToCheck.some(z => rectsIntersect(r, z))) {
@@ -91,8 +99,28 @@ export async function runDateTimeAction(ctx, rect, idemRects) {
       }
       const content = elementText(el);
       if (looksLikeStamp(content)) {
-        log(`DATETIME: existing stamp-like text "${content}" — skipping.`);
-        return out;
+        // A HEADING whose text contains a date ("Weekly 14/07/2026") must
+        // not block the stamp — the content guard only applies to texts
+        // OUTSIDE the title box (drifted stamps, user-moved dates).
+        const off = ctx.displayOff || {x: 0, y: 0};
+        const tb = ctx.titleBoxPage;
+        const inTitleBox =
+          r &&
+          tb &&
+          (rectsIntersect(r, tb) ||
+            rectsIntersect(r, {
+              left: tb.left + off.x,
+              top: tb.top + off.y,
+              right: tb.right + off.x,
+              bottom: tb.bottom + off.y,
+            }));
+        if (!inTitleBox) {
+          log(`DATETIME: existing stamp-like text "${content}" — skipping.`);
+          return out;
+        }
+        log(
+          `DATETIME: stamp-like text "${content}" is the page title — not a stamp, continuing.`,
+        );
       }
     }
     log(`DATETIME: ${texts.length} text element(s) on page, none in zone.`);
