@@ -41,7 +41,7 @@ that matches your device:
 | Your firmware | Download | Notes |
 |---|---|---|
 | **Stable / older** — you never flashed the developer plugin-preview build | **[v1.0.0](../../releases/tag/v1.0.0)** | The classic build. This is what almost everyone should use. |
-| **Plugin-preview (Chauvet)** — you flashed the developer plugin-preview firmware | **[v2.0.4](../../releases/tag/v2.0.4)** | Rebuilt for `sn-plugin-lib` 0.1.65: declares & requests the file permissions the new firmware requires. Also adds the dot-grid templates. |
+| **Plugin-preview (Chauvet)** — you flashed the developer plugin-preview firmware | **[v2.0.5](../../releases/tag/v2.0.5)** | Rebuilt for `sn-plugin-lib` 0.1.65: declares & requests the file permissions the new firmware requires. Also adds the dot-grid templates. |
 
 **Not sure which you have?** If you never deliberately installed a "plugin
 preview / developer" firmware, you are on stable → use **v1.0.0**. Installing
@@ -64,20 +64,23 @@ the wrong build shows *"package not compatible"* or the plugin does nothing.
 Full instructions, settings reference and troubleshooting:
 [User Manual](docs/USER_MANUAL.md).
 
-## Known issue: screen flashing (Supernote firmware bug)
+## Screen flashing — fixed on the plugin-preview firmware (since v2.0.5)
 
-While the plugin runs, the page flashes several times and old lasso-copied
-content may briefly reappear. This is a **firmware bug** — the note app
-spontaneously pastes its lasso copy buffer during any plugin lasso
-operation, and can even hijack the heading conversion —
-[reported here and confirmed by Ratta](https://www.reddit.com/r/Supernote_dev/comments/1uodbvo/),
-a fix is in the works. SuperTemplate defuses it end to end: ghost content
-is removed and a hijacked conversion is repaired on the fly; the extra
-flashing is that cleanup at work.
+The two firmware bugs this plugin used to work around are **fixed by Ratta on
+the plugin-preview (Chauvet) firmware**, so **v2.0.5** runs noticeably cleaner:
 
-The plugin also works around a second firmware bug it reported:
-[PluginHost never deletes old plugin versions](https://www.reddit.com/r/Supernote_dev/comments/1uo2y0g/)
-— it cleans its own stale versions at startup.
+- The **phantom lasso-paste** — the note app spontaneously pasting its lasso
+  copy buffer during a plugin lasso operation, which added ghost strokes and
+  extra flashing — no longer happens. Title conversion keeps your whole title
+  with no leftover ghosts.
+  ([originally reported and confirmed by Ratta](https://www.reddit.com/r/Supernote_dev/comments/1uodbvo/))
+- **Old plugin versions stacking on disk** is now auto-cleaned by the firmware.
+  ([reported here](https://www.reddit.com/r/Supernote_dev/comments/1uo2y0g/))
+
+On the **stable firmware** (v1.0.0) both bugs are still present: the page
+flashes a few times while the plugin strips ghost content on the fly, and it
+cleans its own stale versions at startup. Those safety guards remain in v2.0.5
+as a dormant net.
 
 ## Building from source
 

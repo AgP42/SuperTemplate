@@ -8,7 +8,7 @@
  */
 
 import React, {useEffect, useState} from 'react';
-import {Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {Image, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {PluginManager} from 'sn-plugin-lib';
 import {
   DATE_FORMATS,
@@ -24,6 +24,8 @@ import {
 import {SUPPORTED_LANGS, formatStamp, KEYWORD_FORMATS} from './src/utils/datetime';
 import {installBundledTemplates} from './src/templatesInstall';
 import {flushLog} from './src/utils/logger';
+
+const KOFI_QR = require('./assets/kofi-qr.png');
 
 type Config = typeof DEFAULT_CONFIG;
 
@@ -349,6 +351,19 @@ function App(): React.JSX.Element {
         </Section>
       </ScrollView>
 
+      <View style={styles.kofiRow}>
+        <View style={{flex: 1}}>
+          <Text style={styles.kofiText}>
+            Made with love and expensive Claude tokens ;-) If SuperTemplate is
+            part of your Supernote routine, let me know with a coffee ☕
+          </Text>
+          <Text selectable style={styles.kofiLink}>
+            https://ko-fi.com/agp42
+          </Text>
+        </View>
+        <Image source={KOFI_QR} style={styles.kofiQr} resizeMode="contain" />
+      </View>
+
       <View style={styles.navBar}>
         <View style={styles.navLeft}>
           {saveStatus !== '' && <Text style={styles.hint}>{saveStatus}</Text>}
@@ -419,6 +434,10 @@ const styles = StyleSheet.create({
   },
   inlineRow: {flexDirection: 'row', alignItems: 'center', gap: 14},
   hint: {fontSize: 12, color: '#000000', flex: 1, flexWrap: 'wrap'},
+  kofiRow: {flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderColor: '#000000', paddingTop: 10, paddingHorizontal: 14, marginTop: 4},
+  kofiText: {fontSize: 12, color: '#000000', lineHeight: 17},
+  kofiLink: {fontSize: 12, color: '#000000', fontWeight: '700', marginTop: 3},
+  kofiQr: {width: 74, height: 74, borderWidth: 1, borderColor: '#000000', marginLeft: 10},
   choice: {
     borderWidth: 1.5,
     borderColor: '#000000',
