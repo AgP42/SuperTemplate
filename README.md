@@ -30,6 +30,10 @@ popup. Everything runs on-device. No cloud, no network, no account.
 
 ![Result](docs/images/01-result.png)
 
+New in v2.0: **dot-grid templates** alongside the ruled ones (black, light or no logo):
+
+![A dot-grid template](docs/images/12-dotgrid.png)
+
 ## Which version do I need? (Supernote firmware)
 
 In August 2026 Supernote shipped a **plugin-preview firmware** (Chauvet
