@@ -102,6 +102,9 @@ The `main` branch targets the **plugin-preview (Chauvet) firmware**
 (`sn-plugin-lib` 0.1.65, file-permission handling). To build the
 **stable-firmware** version instead, check out the `v1.0.0` tag first.
 
+Porting your own plugin to the preview firmware? Field notes here:
+[docs/CHAUVET-MIGRATION.md](docs/CHAUVET-MIGRATION.md).
+
 Advanced: zones are stored as page-size ratios in the on-device config
 (`MyStyle/Plugins/SuperTemplate/SuperTemplate_Config.json`) — edit them to
 adapt the plugin to your own template PNG.
