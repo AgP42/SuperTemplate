@@ -7,9 +7,9 @@
 heading and stamps the current date & time — on a ready-made note template.**
 
 SuperTemplate is a plugin for Supernote e-ink devices (tested on A5 X and
-Manta). It ships note templates (black, light or no logo) with a title box
-and a datetime slot; write your title on the guide line, **double-tap the
-logo area with your finger**, and the plugin:
+Manta). It ships six note templates — **lined or dot-grid**, each in black,
+light or no logo — with a title box and a datetime slot; write your title on
+the guide line, **double-tap the logo area with your finger**, and the plugin:
 
 - stamps the current date & time (4 formats x 5 languages, size options),
 - registers an invisible date keyword so the page is findable via
@@ -30,18 +30,36 @@ popup. Everything runs on-device. No cloud, no network, no account.
 
 ![Result](docs/images/01-result.png)
 
+## Which version do I need? (Supernote firmware)
+
+In August 2026 Supernote shipped a **plugin-preview firmware** (Chauvet
+`3.29.43` for Manta / Nomad, `2.26.40` for A5 X / A6 X) that introduces a new
+plugin **permission system** and other breaking plugin-API changes. A build
+made for one firmware does **not** run on the other — so download the release
+that matches your device:
+
+| Your firmware | Download | Notes |
+|---|---|---|
+| **Stable / older** — you never flashed the developer plugin-preview build | **[v1.0.0](../../releases/tag/v1.0.0)** | The classic build. This is what almost everyone should use. |
+| **Plugin-preview (Chauvet)** — you flashed the developer plugin-preview firmware | **[v2.0.4](../../releases/tag/v2.0.4)** | Rebuilt for `sn-plugin-lib` 0.1.65: declares & requests the file permissions the new firmware requires. Also adds the dot-grid templates. |
+
+**Not sure which you have?** If you never deliberately installed a "plugin
+preview / developer" firmware, you are on stable → use **v1.0.0**. Installing
+the wrong build shows *"package not compatible"* or the plugin does nothing.
+
 ## Install
 
-1. Download `supertemplate-X.Y.Z.snplg` from the
-   [latest release](../../releases/latest) and copy it into the `MyStyle`
-   folder of your device (USB file transfer or Supernote Partner).
+1. Download the `supertemplate-X.Y.Z.snplg` that matches your firmware
+   (see [Which version do I need?](#which-version-do-i-need-supernote-firmware)
+   above) and copy it into the `MyStyle` folder of your device (USB file
+   transfer or Supernote Partner).
 2. On the device: **Settings → Apps → Plugins → Add Plugin** → select
    `supertemplate`.
 3. Open a note, open the toolbar plugin menu, tap **SuperTemplate** and use
-   **Install / update templates** — the three bundled template pages land
-   in MyStyle.
-4. Create a note page with one of the `SuperTemplate_simpleNote` templates
-   and enjoy.
+   **Install / update templates** — the six bundled template pages (lined and
+   dot-grid) land in MyStyle.
+4. Create a note page with one of the `SuperTemplate_simpleNote` (lined) or
+   `SuperTemplate_dotGrid` (dotted) templates and enjoy.
 
 Full instructions, settings reference and troubleshooting:
 [User Manual](docs/USER_MANUAL.md).
@@ -72,6 +90,10 @@ npm ci
 Requires Node >= 18, JDK >= 19, Android SDK Platform 35. React Native is
 pinned to 0.79.2 (must match the device's PluginHost runtime — never
 upgrade).
+
+The `main` branch targets the **plugin-preview (Chauvet) firmware**
+(`sn-plugin-lib` 0.1.65, file-permission handling). To build the
+**stable-firmware** version instead, check out the `v1.0.0` tag first.
 
 Advanced: zones are stored as page-size ratios in the on-device config
 (`MyStyle/Plugins/SuperTemplate/SuperTemplate_Config.json`) — edit them to

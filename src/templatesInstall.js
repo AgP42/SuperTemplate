@@ -11,6 +11,9 @@ const BUNDLED_TEMPLATES = [
   {name: 'SuperTemplate_simpleNote.png', asset: require('../assets/templates/SuperTemplate_simpleNote.png')},
   {name: 'SuperTemplate_simpleNote_logoLight.png', asset: require('../assets/templates/SuperTemplate_simpleNote_logoLight.png')},
   {name: 'SuperTemplate_simpleNote_noLogo.png', asset: require('../assets/templates/SuperTemplate_simpleNote_noLogo.png')},
+  {name: 'SuperTemplate_dotGrid.png', asset: require('../assets/templates/SuperTemplate_dotGrid.png')},
+  {name: 'SuperTemplate_dotGrid_logoLight.png', asset: require('../assets/templates/SuperTemplate_dotGrid_logoLight.png')},
+  {name: 'SuperTemplate_dotGrid_noLogo.png', asset: require('../assets/templates/SuperTemplate_dotGrid_noLogo.png')},
 ];
 
 const DEST_DIR = `${RNFS.ExternalStorageDirectoryPath}/MyStyle`;

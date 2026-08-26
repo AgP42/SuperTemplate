@@ -13,9 +13,10 @@
   },
   "author": "AgP42",
   "iconPath": "assets/icon.png",
-  "versionName": "1.0.0",
-  "versionCode": "69",
+  "versionName": "2.0.4",
+  "versionCode": "81",
   "pluginID": "yl4k7839ugmxkc0c",
   "pluginKey": "supertemplate",
-  "jsMainPath": "index"
+  "jsMainPath": "index",
+  "uses-permissions": ["plugin.permission.FILE:READ", "plugin.permission.FILE:WRITE"]
 }

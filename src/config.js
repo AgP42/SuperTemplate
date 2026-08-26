@@ -100,6 +100,10 @@ export const DEFAULT_CONFIG = {
     {name: 'SuperTemplate_simpleNote', zones: ZONES},
     {name: 'SuperTemplate_simpleNote_logoLight', zones: ZONES},
     {name: 'SuperTemplate_simpleNote_noLogo', zones: ZONES},
+    // Dot-grid variants: same header/zones, ruled lines replaced by a 59px dot grid.
+    {name: 'SuperTemplate_dotGrid', zones: ZONES},
+    {name: 'SuperTemplate_dotGrid_logoLight', zones: ZONES},
+    {name: 'SuperTemplate_dotGrid_noLogo', zones: ZONES},
   ],
 };
 

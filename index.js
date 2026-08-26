@@ -11,10 +11,11 @@ import {PluginManager} from 'sn-plugin-lib';
 import App from './App';
 import {name as appName} from './app.json';
 import {runHeaderActions} from './src/runHeaderActions';
-import {loadConfig} from './src/config';
+import {loadConfig, getCachedConfig} from './src/config';
 import {TRIGGER_SCREEN_ZONE} from './src/zones';
 import {createDoubleTapDetector} from './src/utils/doubleTap';
 import {bubbleHide} from './src/bubble';
+import {ensureFilePermissions} from './src/utils/permissions';
 import {log, flushLog, markT0} from './src/utils/logger';
 
 const BUTTON_ID = 100;
@@ -96,13 +97,15 @@ const onMotionMsg = msg => {
     if (dt > 400 || moved > 40) {
       return; // drag/long-press, not a tap
     }
-    // Calibration probe: log taps near the trigger corner (top-left 25%).
-    const {width, height} = screenPx();
-    if (y < height / 4 && x < width * 0.3) {
-      log(
-        `tap probe: x=${Math.round(x)} y=${Math.round(y)} inZone=${isInsideTriggerZone(x, y)}`,
-      );
-      flushLog('TAP');
+    // Calibration probe (debug only): log taps near the trigger corner.
+    if (getCachedConfig().logging) {
+      const {width, height} = screenPx();
+      if (y < height / 4 && x < width * 0.3) {
+        log(
+          `tap probe: x=${Math.round(x)} y=${Math.round(y)} inZone=${isInsideTriggerZone(x, y)}`,
+        );
+        flushLog('TAP');
+      }
     }
     if (detector(x, y, Date.now())) {
       triggerPipeline('double-tap');
@@ -125,6 +128,16 @@ const boot = async () => {
       log(
         `screen: ${dp.width}x${dp.height} dp × ratio ${PixelRatio.get()} = ${px.width}x${px.height} px`,
       );
+    }
+
+    // Chauvet permission model: the host gates shared-storage access (even raw
+    // RNFS) behind FILE:READ/WRITE. Request them before loadConfig's RNFS read
+    // so it doesn't hit a SecurityException.
+    try {
+      const ok = await ensureFilePermissions();
+      log(`file permissions granted: ${ok}`);
+    } catch (e) {
+      log(`ensureFilePermissions failed: ${e.message}`);
     }
 
     try {
@@ -155,9 +168,6 @@ const boot = async () => {
       log(`janitor failed: ${e.message}`);
     }
 
-    // No more auto-shown bubble (stale bubbles stack across reinstalls and
-    // it floats over every app). Defensive hide of this instance's bubble;
-    // orphans from older instances only disappear on device reboot.
     try {
       bubbleHide();
     } catch (_) {}

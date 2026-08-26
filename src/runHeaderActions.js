@@ -3,6 +3,7 @@ import {zoneToRect} from './zones';
 import {screenPx} from './utils/screen';
 import {toast} from './utils/toast';
 import {loadConfig, getActiveZones} from './config';
+import {ensureFilePermissions} from './utils/permissions';
 import {runHeadingAction} from './actions/HeadingAction';
 import {runDateTimeAction} from './actions/DateTimeAction';
 import {log, flushLog} from './utils/logger';
@@ -264,9 +265,16 @@ function sameNums(a, b) {
 async function verifyTitleContract(ctx, titleNum, heading, newTitleTextNum) {
   let el = null;
   try {
-    // What the heading SHOULD contain.
+    // What the heading SHOULD contain. TRUST THE LASSO CAPTURE (strokeNums):
+    // the firmware ghost-paste is fixed on Chauvet, so the selection is the
+    // user's real ink. Never repoint a handwriting title down to the JS
+    // cluster prediction (intendedNums) — that dropped a legitimately-captured
+    // stroke and caused the reloadFile flicker (foreign A5X pages, 2026-08-26).
+    // OCR / typed titles have no strokes: they fall through to the text path.
     let expected =
-      Array.isArray(heading.intendedNums) && heading.intendedNums.length > 0
+      Array.isArray(heading.strokeNums) && heading.strokeNums.length > 0
+        ? heading.strokeNums
+        : Array.isArray(heading.intendedNums) && heading.intendedNums.length > 0
         ? heading.intendedNums
         : null;
     let expectText = false;
@@ -372,6 +380,33 @@ export async function runHeaderActions() {
 
     const ctx = {path: pathRes.result, pageNum: pageRes.result || 0};
 
+    // FILE:WRITE gate (Chauvet permission model): every action below writes
+    // to the note (title, datetime, keyword, paste-guard delete). Ask once;
+    // reads above this point are not permission-gated.
+    if (!(await ensureFilePermissions())) {
+      log('ABORT: file permission denied by user.');
+      toast(
+        'SuperTemplate: file permission denied — grant it to stamp headings and dates.',
+      );
+      return;
+    }
+
+    // Only run where the view accepts handwriting (Chauvet API). Abort cleanly
+    // on a read-only / incompatible view instead of failing mid-pipeline.
+    // Defensive: abort ONLY on an explicit `false` so an unexpected shape or a
+    // legacy host (no canHandwrite) never blocks the plugin.
+    try {
+      const hw = await PluginCommAPI.canHandwrite();
+      log(`canHandwrite → ${JSON.stringify(hw)}`);
+      if (hw && hw.success === true && hw.result === false) {
+        log('ABORT: current view does not accept handwriting.');
+        toast('SuperTemplate: this view does not accept handwriting here.');
+        return;
+      }
+    } catch (e) {
+      log(`canHandwrite check failed (continuing): ${e.message}`);
+    }
+
     try {
       const saveRes = await PluginNoteAPI.saveCurrentNote();
       log(`saveCurrentNote → ${JSON.stringify(saveRes)}`);
@@ -401,8 +436,6 @@ export async function runHeaderActions() {
     } catch (e) {
       log(`pageSnapshot START failed: ${e.message}`);
     }
-    ctx.numsAtStart = numsBefore; // paste-intercept baseline (HeadingAction)
-
     // Some pages return EMPTY from bulk getElements while per-num
     // getElement works fine (field case 2026-07-15, PM workshops p85,
     // ~150 elements): without this fallback the title scan sees no
@@ -424,6 +457,18 @@ export async function runHeaderActions() {
     // anchored — and the lasso/insert APIs work in DISPLAY coordinates =
     // page coordinates + ((screenW - pageW) / 2, 0). Larger-than-screen
     // pages remain unsupported (refused with a toast).
+    // Light foreign-page probe: display size = screen size, which differs from
+    // the page size on notes made for another device. Logged in debug only, to
+    // avoid an SDK await on every trigger.
+    if (ctx.config && ctx.config.logging) {
+      try {
+        const disp = await PluginCommAPI.getPageDisplaySize();
+        log(`getPageDisplaySize → ${JSON.stringify(disp)}`);
+      } catch (e) {
+        log(`getPageDisplaySize failed: ${e.message}`);
+      }
+    }
+
     const screen = screenPx();
     const smaller =
       screen.width - ctx.pageSize.width > 2 ||

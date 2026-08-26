@@ -21,7 +21,7 @@ import {
   loadConfig,
   saveConfig,
 } from './src/config';
-import {SUPPORTED_LANGS, formatStamp} from './src/utils/datetime';
+import {SUPPORTED_LANGS, formatStamp, KEYWORD_FORMATS} from './src/utils/datetime';
 import {installBundledTemplates} from './src/templatesInstall';
 import {flushLog} from './src/utils/logger';
 
@@ -159,9 +159,9 @@ function App(): React.JSX.Element {
               template pages into MyStyle (re-run after a plugin update).
             </Text>
             <Text style={styles.howtoStep}>
-              2. Create a note page with one of the SuperTemplate_simpleNote
-              templates (black, light or no logo), or set it as your standard
-              template.
+              2. Create a note page with one of the SuperTemplate templates
+              (lined or dot-grid; black, light or no logo), or set it as your
+              standard template.
             </Text>
             <Text style={styles.howtoStep}>
               3. Write your page title inside the title box, on the guide
@@ -189,7 +189,7 @@ function App(): React.JSX.Element {
             <Text style={styles.hint}>
               {tplStatus !== ''
                 ? tplStatus
-                : 'Copies the 3 bundled template pages into MyStyle.'}
+                : 'Copies the 6 bundled template pages into MyStyle.'}
             </Text>
           </View>
         </Section>
@@ -231,7 +231,7 @@ function App(): React.JSX.Element {
               selected={config.keyword === false}
               onPress={() => update({keyword: false})}
             />
-            {['YYYYMMDD', 'YYYY-MM-DD', 'DD/MM/YYYY', 'YYYY-MM'].map(f => (
+            {KEYWORD_FORMATS.map(f => (
               <Choice
                 key={f}
                 label={f}

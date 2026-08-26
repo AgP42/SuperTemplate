@@ -1,6 +1,6 @@
 {
   "name": "supertemplate",
-  "version": "1.0.0",
+  "version": "2.0.4",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
@@ -13,7 +13,7 @@
     "react": "19.0.0",
     "react-native": "0.79.2",
     "react-native-fs": "2.20.0",
-    "sn-plugin-lib": "0.1.43"
+    "sn-plugin-lib": "0.1.65"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

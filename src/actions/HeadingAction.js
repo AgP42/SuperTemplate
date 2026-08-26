@@ -27,10 +27,10 @@ import {log} from '../utils/logger';
  * - setLassoTitle consumes the lasso (further lasso calls fail with 904).
  * - A loaded lasso COPY buffer is pasted into the page on EVERY lasso
  *   creation (Ratta-confirmed bug); pasted strokes get absorbed by a
- *   title created afterwards, and deleting them then EMPTIES the heading
- *   in the recap → abortIfBufferPasted() runs before every setLassoTitle.
+ *   title created afterwards. Fixed on the Chauvet firmware; the end-pass
+ *   paste-guard in runHeaderActions remains as a safety net.
  *
- * @param {{path:string,pageNum:number,pageSize:object,config:object,displayOff:{x:number,y:number},numsAtStart:number[],titleBoxPage:object}} ctx
+ * @param {{path:string,pageNum:number,pageSize:object,config:object,displayOff:{x:number,y:number},titleBoxPage:object}} ctx
  * @returns {Promise<{converted:boolean, ocrText:string|null, strokeNums:number[], deleteHandwriting:boolean}>}
  */
 export async function runHeadingAction(ctx) {
@@ -476,7 +476,7 @@ async function findTitleCluster(ctx) {
   if (members.length > 0) {
     log(`members: ${JSON.stringify(members.slice(0, 25))}`);
   }
-  return {rect, count: members.length, memberNums: members.map(m => m.num), unboxed};
+  return {rect, memberNums: members.map(m => m.num), unboxed};
 }
 
 /** Materialize the current lasso selection: stroke nums/bboxes + text boxes. */
