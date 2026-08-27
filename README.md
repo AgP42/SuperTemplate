@@ -44,12 +44,10 @@ that matches your device:
 
 | Your firmware | Download | Notes |
 |---|---|---|
-| **Stable / older** — you never flashed the developer plugin-preview build | **[v1.0.0](../../releases/tag/v1.0.0)** | The classic build. This is what almost everyone should use. |
-| **Plugin-preview (Chauvet)** — you flashed the developer plugin-preview firmware | **[v2.0.5](../../releases/tag/v2.0.5)** | Rebuilt for `sn-plugin-lib` 0.1.65: declares & requests the file permissions the new firmware requires. Also adds the dot-grid templates. |
+| **Older** Chauvet `3.29.42` for Manta / Nomad, `2.26.39` for A5 X / A6 X | **[v1.0.0](../../releases/tag/v1.0.0)** | The initial version, probably not the one you need if you have flashed recently. |
+| **1st plugin beta release** Chauvet `3.29.43` for Manta / Nomad, `2.26.40` for A5 X / A6 X | **[v2.0.5](../../releases/tag/v2.0.5)** | Rebuilt for `sn-plugin-lib` 0.1.65: declares & requests the file permissions the new firmware requires. Also adds the dot-grid templates. |
 
-**Not sure which you have?** If you never deliberately installed a "plugin
-preview / developer" firmware, you are on stable → use **v1.0.0**. Installing
-the wrong build shows *"package not compatible"* or the plugin does nothing.
+Installing the wrong build shows *"package not compatible"* or the plugin does nothing.
 
 ## Install
 
