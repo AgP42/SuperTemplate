@@ -1,6 +1,7 @@
 # SuperTemplate — User Manual
 
-*Version 1.0.0 — for Supernote devices with plugin support (tested on A5 X and Manta).*
+*Version 2.0.8 — for Supernote devices with plugin support (tested on A5 X and
+Manta).*
 
 SuperTemplate automates the header of your note pages: **double-tap the S logo**
 printed on the template and the plugin stamps the current date & time, then
@@ -9,17 +10,34 @@ table of contents).
 
 ![A finished page: datetime stamped, handwritten title converted to a heading](images/01-result.png)
 
+## Which build do I need? (Supernote firmware)
+
+There are **two releases** — a build made for one firmware version does **not**
+run on the other. Check your version under **Settings → About**:
+
+- **v2.0.8** — for Chauvet **`3.29.43`** (Manta / Nomad) / **`2.26.40`**
+  (A5 X / A6 X), the firmware that introduced the plugin **permission system**.
+  This is the current build; it adds the dot-grid templates and fixes the title
+  zone on notes made for another device.
+- **v1.0.0** — for the previous firmware, Chauvet **`3.29.42`** (Manta / Nomad)
+  / **`2.26.39`** (A5 X / A6 X), before the permission system.
+
+Installing the wrong build shows *"package not compatible"* or the plugin does
+nothing. The download links are in the project README under *"Which version do
+I need?"*. The rest of this manual applies to both builds; the few places where
+behaviour differs by firmware are called out inline.
+
 ## Installation
 
-1. Copy `supertemplate-X.Y.Z.snplg` into the `MyStyle` folder of your device
-   (USB file transfer or Supernote Partner).
+1. Copy the `supertemplate-X.Y.Z.snplg` that matches your firmware into the
+   `MyStyle` folder of your device (USB file transfer or Supernote Partner).
 2. On the device: **Settings → Apps → Plugins → Add Plugin** and select
    `supertemplate`. Once installed, the plugin appears in that list with its
    "S" icon and version number.
 3. Open any note, open the plugin menu in the toolbar (puzzle-piece icon)
    and tap **SuperTemplate** to open the settings.
 4. In the settings, tap **Install / update templates**. This copies the
-   three bundled template pages into `MyStyle`, where Supernote picks them
+   six bundled template pages into `MyStyle`, where Supernote picks them
    up as page templates. Re-run it after every plugin update.
    ![The settings screen](images/04-settings.png)
 
@@ -27,17 +45,33 @@ table of contents).
 it listens for the double-tap on every note page from the moment the device
 boots. The toolbar button only opens the settings screen.
 
+### File permission (v2.0.5 only)
+
+On the v2.0.5 firmware (Chauvet `3.29.43` / `2.26.40`), the first time the
+plugin acts on a page it asks the system for **file permission** (it needs to
+read the note and its settings, and write the heading, date and keyword). Tap
+**Allow** — or **Always allow** so it never asks again. If you decline, a popup
+says *"file permission denied — grant it to stamp headings and dates"* and
+nothing is stamped; double-tap again and allow it. The earlier firmware
+(v1.0.0) has no permission system, so this step never appears there.
+
 ## The templates
 
-Three variants, identical layout — pick the logo you like:
+Six variants in two families, same header layout — pick the body ruling and the
+logo you like:
 
-- `SuperTemplate_simpleNote` — black S logo,
-- `SuperTemplate_simpleNote_logoLight` — light gray logo,
-- `SuperTemplate_simpleNote_noLogo` — no logo at all (the double-tap zone is
-  still there, left of the title box).
+- **Lined** — `SuperTemplate_simpleNote` (black S logo),
+  `SuperTemplate_simpleNote_logoLight` (light gray logo),
+  `SuperTemplate_simpleNote_noLogo` (no logo).
+- **Dot-grid** — `SuperTemplate_dotGrid`, `SuperTemplate_dotGrid_logoLight`,
+  `SuperTemplate_dotGrid_noLogo` (same three logo options, ruled lines replaced
+  by a dot grid).
 
-Each has a **datetime slot** between the dashed marks at the top, a **title
-box** with a **guide line** inside it, and the ruled body lines.
+On the no-logo variants the double-tap zone is still there, left of the title
+box. Each template has a **datetime slot** between the dashed marks at the top,
+a **title box** with a **guide line** inside it, and the ruled or dotted body.
+
+![A dot-grid template](images/12-dotgrid.png)
 
 ![Selecting the template from MyStyle](images/05-template-picker.png)
 
@@ -99,6 +133,9 @@ rest of the handwriting in OCR mode.
   the font automatically when the title is too long for the page width.
 - **Your own fonts**: drop `.ttf`/`.otf` files into `MyStyle/fonts` and they
   appear as choices next to Default / Serif / Mono.
+- If a selection looks **bigger than a title**, OCR replacement is skipped for
+  safety and a popup says so — your handwriting is kept as the heading rather
+  than risk replacing a whole block of text.
 
 ### Updating the date
 
@@ -118,7 +155,7 @@ Open via the toolbar plugin button. Everything is applied with
 
 | Section | Setting | Effect |
 |---------|---------|--------|
-| Template | Install / update templates | Copies/refreshes the 3 bundled templates into MyStyle |
+| Template | Install / update templates | Copies/refreshes the 6 bundled templates (lined + dot-grid) into MyStyle |
 | Datetime | Language | Day/month names (FR, EN, DE, ES, IT) |
 | | Format | Four date formats, previewed live in your language |
 | | Text size | Size of the date text (S/M/L/XL) |
@@ -130,16 +167,23 @@ Open via the toolbar plugin button. Everything is applied with
 
 ## The popups (toasts)
 
-The plugin always tells you why nothing visible happened:
+The plugin always tells you why nothing visible happened. Every message is
+prefixed *SuperTemplate:* on the device.
 
 | Message | Meaning |
 |---------|---------|
-| *title box is empty* | Nothing to convert in the box |
-| *no writing in the title box* | Ink was found nearby but nothing touches the box |
-| *the title area touches other writing* | Converting would swallow a body line — move it or write the title smaller |
-| *the title reaches too far down* | A stroke drags the title area deep into the page |
+| *title box is empty* | Nothing in the box to convert |
+| *nothing to convert in the title box* | Ink was found nearby but nothing touches the box |
+| *another text box is in the way — no heading applied* | A second text box overlaps the title area |
+| *the title area touches other writing — nothing converted* | Converting would swallow a body line — move it or write the title smaller |
+| *the title reaches too far down — nothing converted* | A stroke drags the title area deep into the page |
+| *selection looks bigger than a title — OCR replacement skipped for safety* | OCR skipped; your handwriting is kept as the heading |
+| *the device refused to heading the typed title* | The firmware rejected applying a heading to the typed/OCR title |
+| *this view does not accept handwriting here* | The current view can't take handwriting actions right now |
 | *this page already has its heading* | Idempotence — nothing to do |
-| *the conversion went wrong (firmware) — the page was cleaned…* | Firmware paste bug (see below); the page was cleaned, double-tap again |
+| *this page was created for a larger device — not supported on this screen yet* | Foreign page from a bigger model (see *Notes created on another device*) |
+| *file permission denied — grant it to stamp headings and dates* | You declined the file permission (v2.0.5) — re-trigger and allow |
+| *the conversion went wrong (firmware) — the page was cleaned, no heading applied. Trigger again* | Firmware paste bug (see below); the page was cleaned, double-tap again |
 
 ## Files
 
@@ -157,6 +201,8 @@ Everything lives in `MyStyle/Plugins/SuperTemplate/`:
   make sure the page uses a SuperTemplate template; check the popups and the
   log file.
 - **A popup explains a refusal**: see *The popups* table above.
+- **"file permission denied"** (v2.0.5): you declined the system
+  permission — double-tap again and tap Allow / Always allow.
 - **No date stamped**: a date is probably already present (see *Updating the
   date*).
 - **Plugin missing from the toolbar**: uninstall then reinstall the plugin
@@ -169,25 +215,33 @@ displayed 1:1 and centered — the plugin handles this automatically:
 double-tap the logo where you see it. Pages created on a LARGER device are
 not supported yet; the plugin tells you so with a popup and does nothing.
 
-## Known issue: the firmware paste bug (and how the plugin defuses it)
+## Firmware bugs it works around (v1.0.0 firmware only)
 
-If you have lasso-copied content in the copy buffer, the Supernote firmware
-spontaneously pastes it into the page during any plugin lasso operation —
-it can even hijack the heading conversion itself. This is a **firmware
-bug**, [reported and confirmed by Ratta](https://www.reddit.com/r/Supernote_dev/comments/1uodbvo/);
-a fix is in the works on their side.
+Two Supernote firmware bugs affected the plugin on the v1.0.0 firmware
+(Chauvet `3.29.42` / `2.26.39`). **Both are fixed on the v2.0.5 firmware
+(Chauvet `3.29.43` / `2.26.40`)**, so v2.0.5 runs noticeably cleaner there; the
+safeguards below stay in the code as a dormant net.
+
+### The paste bug
+
+On the v1.0.0 firmware, if you have lasso-copied content in the copy buffer, the
+firmware spontaneously pastes it into the page during any plugin lasso
+operation — it can even hijack the heading conversion itself. This is a
+**firmware bug**, [reported and confirmed by Ratta](https://www.reddit.com/r/Supernote_dev/comments/1uodbvo/).
 
 SuperTemplate defuses it end to end: pasted ghost content is detected and
 removed, and a hijacked conversion is repaired on the fly (the heading is
 re-pointed to *your* title). In the rare case where repair is impossible,
 the page is cleaned and a popup asks you to double-tap again. The extra
-screen flashes during processing are that cleanup at work.
+screen flashes during processing are that cleanup at work. On the v2.0.5
+firmware the phantom paste no longer happens, so those extra flashes are gone.
 
-## Storage note
+### Old versions stacking on disk
 
-Supernote's PluginHost currently keeps every previously installed version of
-a plugin on disk ([bug report](https://www.reddit.com/r/Supernote_dev/comments/1uo2y0g/)).
-SuperTemplate cleans its own old versions automatically at startup.
+On the v1.0.0 firmware, Supernote's PluginHost keeps every previously installed
+version of a plugin on disk ([bug report](https://www.reddit.com/r/Supernote_dev/comments/1uo2y0g/));
+SuperTemplate cleans its own old versions automatically at startup. The v2.0.5
+firmware auto-cleans them itself, so this guard is redundant there.
 
 ## Credits
 

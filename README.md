@@ -36,16 +36,16 @@ New in v2.0: **dot-grid templates** alongside the ruled ones (black, light or no
 
 ## Which version do I need? (Supernote firmware)
 
-In August 2026 Supernote shipped a **plugin-preview firmware** (Chauvet
-`3.29.43` for Manta / Nomad, `2.26.40` for A5 X / A6 X) that introduces a new
-plugin **permission system** and other breaking plugin-API changes. A build
-made for one firmware does **not** run on the other — so download the release
-that matches your device:
+On 2026-08-24 the **Chauvet** firmware `3.29.43` (Manta / Nomad) / `2.26.40`
+(A5 X / A6 X) introduced a new plugin **permission system** and other breaking
+plugin-API changes; the immediately preceding build (`3.29.42` / `2.26.39`) did
+not. A build made for one does **not** run on the other — so download the
+release that matches your firmware version:
 
-| Your firmware | Download | Notes |
+| Your firmware (Settings → About) | Download | Notes |
 |---|---|---|
 | **Older** Chauvet `3.29.42` for Manta / Nomad, `2.26.39` for A5 X / A6 X | **[v1.0.0](../../releases/tag/v1.0.0)** | The initial version, probably not the one you need if you have flashed recently. |
-| **1st plugin beta release** Chauvet `3.29.43` for Manta / Nomad, `2.26.40` for A5 X / A6 X | **[v2.0.5](../../releases/tag/v2.0.5)** | Rebuilt for `sn-plugin-lib` 0.1.65: declares & requests the file permissions the new firmware requires. Also adds the dot-grid templates. |
+| **Plugin beta release** Chauvet `3.29.43` for Manta / Nomad, `2.26.40` for A5 X / A6 X | **[v2.0.8](../../releases/tag/v2.0.8)** | Rebuilt for `sn-plugin-lib` 0.1.65: declares & requests the file permissions the new firmware requires. Adds the dot-grid templates and fixes the title zone on notes made for another device. |
 
 Installing the wrong build shows *"package not compatible"* or the plugin does nothing.
 
@@ -66,10 +66,11 @@ Installing the wrong build shows *"package not compatible"* or the plugin does n
 Full instructions, settings reference and troubleshooting:
 [User Manual](docs/USER_MANUAL.md).
 
-## Screen flashing — fixed on the plugin-preview firmware (since v2.0.5)
+## Screen flashing — fixed on the v2.0.5 firmware
 
 The two firmware bugs this plugin used to work around are **fixed by Ratta on
-the plugin-preview (Chauvet) firmware**, so **v2.0.5** runs noticeably cleaner:
+the v2.0.5 firmware** (Chauvet `3.29.43` / `2.26.40`), so **v2.0.5** runs
+noticeably cleaner:
 
 - The **phantom lasso-paste** — the note app spontaneously pasting its lasso
   copy buffer during a plugin lasso operation, which added ghost strokes and
@@ -79,7 +80,8 @@ the plugin-preview (Chauvet) firmware**, so **v2.0.5** runs noticeably cleaner:
 - **Old plugin versions stacking on disk** is now auto-cleaned by the firmware.
   ([reported here](https://www.reddit.com/r/Supernote_dev/comments/1uo2y0g/))
 
-On the **stable firmware** (v1.0.0) both bugs are still present: the page
+On the **v1.0.0 firmware** (Chauvet `3.29.42` / `2.26.39`) both bugs are still
+present: the page
 flashes a few times while the plugin strips ghost content on the fly, and it
 cleans its own stale versions at startup. Those safety guards remain in v2.0.5
 as a dormant net.
@@ -96,11 +98,12 @@ Requires Node >= 18, JDK >= 19, Android SDK Platform 35. React Native is
 pinned to 0.79.2 (must match the device's PluginHost runtime — never
 upgrade).
 
-The `main` branch targets the **plugin-preview (Chauvet) firmware**
-(`sn-plugin-lib` 0.1.65, file-permission handling). To build the
-**stable-firmware** version instead, check out the `v1.0.0` tag first.
+The `main` branch targets the **v2.0.5 firmware** (Chauvet `3.29.43` /
+`2.26.40`; `sn-plugin-lib` 0.1.65, file-permission handling). To build the
+**v1.0.0 firmware** (Chauvet `3.29.42` / `2.26.39`) version instead, check out
+the `v1.0.0` tag first.
 
-Porting your own plugin to the preview firmware? Field notes here:
+Porting your own plugin to the Chauvet firmware? Field notes here:
 [docs/CHAUVET-MIGRATION.md](docs/CHAUVET-MIGRATION.md).
 
 Advanced: zones are stored as page-size ratios in the on-device config
