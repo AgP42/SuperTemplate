@@ -452,48 +452,92 @@ export async function runHeaderActions() {
       );
     }
 
-    // DISPLAY MODEL (proven by field data, 2026-07-11): pages created for a
-    // SMALLER screen are displayed 1:1, horizontally centered and top-
-    // anchored — and the lasso/insert APIs work in DISPLAY coordinates =
-    // page coordinates + ((screenW - pageW) / 2, 0). Larger-than-screen
-    // pages remain unsupported (refused with a toast).
-    // Light foreign-page probe: display size = screen size, which differs from
-    // the page size on notes made for another device. Logged in debug only, to
-    // avoid an SDK await on every trigger.
-    if (ctx.config && ctx.config.logging) {
-      try {
-        const disp = await PluginCommAPI.getPageDisplaySize();
-        log(`getPageDisplaySize → ${JSON.stringify(disp)}`);
-      } catch (e) {
-        log(`getPageDisplaySize failed: ${e.message}`);
+    // COORDINATE BASIS (Chauvet). Every element API here — getElement bboxes,
+    // lassoElements, insertText — speaks DISPLAY coordinates (the on-screen
+    // size). getPageSize returns the note's NATIVE size, which DIFFERS on a
+    // page made for another device: an A5X 1404x1872 note shown on a 1920x2560
+    // Manta is scaled to fill, and its strokes come back in 1920x2560 space.
+    // Building the zones from the native size then hands lassoElements a rect
+    // in the wrong space — its right edge lands on the page border and the
+    // selection balloons over the whole page, swallowing the body text (field
+    // bug 2026-09-04, foreign A5X on Manta). So base every rect on the DISPLAY
+    // size. On a native page display == getPageSize, so nothing changes there.
+    // The pre-Chauvet "1:1 centered, page coords + offset" model is kept as a
+    // fallback for a legacy host with no getPageDisplaySize.
+    const nativeSize = ctx.pageSize; // getPageSize: the note's own size
+    let disp = null;
+    try {
+      const dispRes = await PluginCommAPI.getPageDisplaySize();
+      log(`getPageDisplaySize → ${JSON.stringify(dispRes)}`);
+      if (
+        dispRes &&
+        dispRes.success === true &&
+        dispRes.result &&
+        dispRes.result.width > 0 &&
+        dispRes.result.height > 0
+      ) {
+        disp = dispRes.result;
       }
+    } catch (e) {
+      log(`getPageDisplaySize failed: ${e.message}`);
     }
 
-    const screen = screenPx();
-    const smaller =
-      screen.width - ctx.pageSize.width > 2 ||
-      screen.height - ctx.pageSize.height > 2;
-    const larger =
-      ctx.pageSize.width - screen.width > 2 ||
-      ctx.pageSize.height - screen.height > 2;
-    if (larger) {
+    let off;
+    if (disp) {
+      // A note made for a LARGER device (native size exceeds the screen) is
+      // still refused — same conservative, documented scope as before.
+      if (
+        nativeSize.width - disp.width > 2 ||
+        nativeSize.height - disp.height > 2
+      ) {
+        log(
+          `ABORT: page ${nativeSize.width}x${nativeSize.height} larger than display ${disp.width}x${disp.height} — unsupported display mode.`,
+        );
+        toast(
+          'SuperTemplate: this page was created for a larger device — not supported on this screen yet.',
+        );
+        return;
+      }
+      // Display space is the actual coordinate space of every element API:
+      // use it as the zone basis, with no centering offset.
+      ctx.pageSize = disp;
+      off = {x: 0, y: 0};
       log(
-        `ABORT: page ${ctx.pageSize.width}x${ctx.pageSize.height} larger than screen ${Math.round(screen.width)}x${Math.round(screen.height)} — unsupported display mode.`,
+        `coordinate basis: display ${disp.width}x${disp.height} (native ${nativeSize.width}x${nativeSize.height})`,
       );
-      toast(
-        'SuperTemplate: this page was created for a larger device — not supported on this screen yet.',
-      );
-      return;
+    } else {
+      // Legacy host (no getPageDisplaySize): pre-Chauvet model — smaller pages
+      // shown 1:1, horizontally centered and top-anchored; larger unsupported.
+      const screen = screenPx();
+      const smaller =
+        screen.width - ctx.pageSize.width > 2 ||
+        screen.height - ctx.pageSize.height > 2;
+      const larger =
+        ctx.pageSize.width - screen.width > 2 ||
+        ctx.pageSize.height - screen.height > 2;
+      if (larger) {
+        log(
+          `ABORT: page ${ctx.pageSize.width}x${ctx.pageSize.height} larger than screen ${Math.round(screen.width)}x${Math.round(screen.height)} — unsupported display mode.`,
+        );
+        toast(
+          'SuperTemplate: this page was created for a larger device — not supported on this screen yet.',
+        );
+        return;
+      }
+      off = smaller
+        ? {x: Math.round((screen.width - ctx.pageSize.width) / 2), y: 0}
+        : {x: 0, y: 0};
     }
-    const off = smaller
-      ? {x: Math.round((screen.width - ctx.pageSize.width) / 2), y: 0}
-      : {x: 0, y: 0};
     const shift = r => ({
       left: r.left + off.x,
       top: r.top + off.y,
       right: r.right + off.x,
       bottom: r.bottom + off.y,
     });
+    // lassoElements validates its rect against the NATIVE page size; the zones
+    // here are in display space, so HeadingAction clamps the (tight) lasso rect
+    // to these native bounds before selecting.
+    ctx.nativeSize = nativeSize;
     const titlePage = zoneToRect(zones.title, ctx.pageSize);
     const datetimePage = zoneToRect(zones.datetime, ctx.pageSize);
     // Inserts use DISPLAY coordinates (page + centering offset on foreign

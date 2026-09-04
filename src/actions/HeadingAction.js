@@ -99,9 +99,14 @@ export async function runHeadingAction(ctx) {
   const fitted = cluster.rect;
   out.fittedRect = fitted; // for the end-guard title repair
 
+  // fitted is the tight envelope of the title strokes, in DISPLAY coords (the
+  // space lassoElements hit-tests against); clamp it just inside the native
+  // bounds lassoElements validates against (see clampRectForLasso).
+  const lassoRect = clampRectForLasso(fitted, ctx);
+
   // ── 2. Select it (fitted rect ⇒ containment holds by construction) ────
-  let lassoRes = await PluginCommAPI.lassoElements(fitted);
-  log(`lassoElements(fitted ${JSON.stringify(fitted)}) → ${JSON.stringify(lassoRes)}`);
+  let lassoRes = await PluginCommAPI.lassoElements(lassoRect);
+  log(`lassoElements(native ${JSON.stringify(lassoRect)} ⇐ display ${JSON.stringify(fitted)}) → ${JSON.stringify(lassoRes)}`);
   if (!lassoRes || lassoRes.success !== true || lassoRes.result !== true) {
     log('HEADING: nothing selectable in the title box — skipping.');
     toast('SuperTemplate: title box is empty.');
@@ -146,7 +151,7 @@ export async function runHeadingAction(ctx) {
       log(`rescue reloadFile → ${JSON.stringify(rl)}`);
       out.rescued = selection.boxes;
 
-      lassoRes = await PluginCommAPI.lassoElements(fitted);
+      lassoRes = await PluginCommAPI.lassoElements(lassoRect);
       log(`re-lasso after rescue → ${JSON.stringify(lassoRes)}`);
       if (!lassoRes || lassoRes.result !== true) {
         log('HEADING: re-lasso after rescue caught nothing — aborting.');
@@ -309,7 +314,7 @@ export async function runHeadingAction(ctx) {
       // Re-select what now occupies the box: the typed text on success
       // (text boxes enter any overlapping selection), the untouched ink
       // otherwise. The conversion below applies to either.
-      const relasso = await PluginCommAPI.lassoElements(fitted);
+      const relasso = await PluginCommAPI.lassoElements(lassoRect);
       log(`re-lasso for heading → ${JSON.stringify(relasso)}`);
       if (!relasso || relasso.result !== true) {
         log('HEADING: re-lasso caught nothing — no heading applied.');
@@ -403,17 +408,33 @@ async function findTitleCluster(ctx) {
   }
 
   const boxH = box.bottom - box.top;
-  const rect = {
-    left: Math.max(0, box.left),
-    top: Math.max(0, box.top),
-    right: Math.min(ctx.pageSize.width, box.right),
-    bottom: Math.min(box.bottom, ctx.pageSize.height),
-  };
+  const clampW = ctx.pageSize.width;
+  const clampH = ctx.pageSize.height;
+  // Lasso rect: it must HUG the actual title strokes (their tight envelope),
+  // not the wide printed box. lassoElements selects by full containment and
+  // rejects/balloons a rect that reaches the native page bound, so a box-wide
+  // rect breaks on Chauvet foreign pages (bug 2026-09-04). With strokes on the
+  // box, start from their envelope; with none (typed-title path), fall back to
+  // the box — text boxes enter the selection by overlap, not containment.
+  const rect =
+    members.length > 0
+      ? {
+          left: Math.max(0, Math.floor(members[0].b.left)),
+          top: Math.max(0, Math.floor(members[0].b.top)),
+          right: Math.min(clampW, Math.ceil(members[0].b.right)),
+          bottom: Math.min(clampH, Math.ceil(members[0].b.bottom)),
+        }
+      : {
+          left: Math.max(0, box.left),
+          top: Math.max(0, box.top),
+          right: Math.min(clampW, box.right),
+          bottom: Math.min(clampH, box.bottom),
+        };
   const extend = b => {
     rect.left = Math.max(0, Math.min(rect.left, Math.floor(b.left)));
     rect.top = Math.max(0, Math.min(rect.top, Math.floor(b.top)));
-    rect.right = Math.min(ctx.pageSize.width, Math.max(rect.right, Math.ceil(b.right)));
-    rect.bottom = Math.min(ctx.pageSize.height, Math.max(rect.bottom, Math.ceil(b.bottom)));
+    rect.right = Math.min(clampW, Math.max(rect.right, Math.ceil(b.right)));
+    rect.bottom = Math.min(clampH, Math.max(rect.bottom, Math.ceil(b.bottom)));
   };
   for (const mb of members) {
     extend(mb.b);
@@ -584,6 +605,34 @@ async function headTypedTitle(ctx, out, selection) {
     toast('SuperTemplate: the device refused to heading the typed title.');
   }
   return out;
+}
+
+/**
+ * Clamp a lasso rect for lassoElements. Field-proven firmware behaviour on
+ * Chauvet scaled (foreign) pages: lassoElements selects strokes by FULL
+ * CONTAINMENT, hit-testing the rect's values directly against the strokes'
+ * DISPLAY coordinates (no scaling), BUT it VALIDATES the rect against the
+ * NATIVE page size — a rect exceeding it returns error 905, and a rect whose
+ * edge lands exactly on the native bound makes the selection balloon over the
+ * whole page. So the rect must stay in display values (the strokes' space) yet
+ * be clamped one pixel inside the native bounds. The rect passed here is the
+ * tight envelope of the detected title strokes, which for a normal title/date
+ * already sits within the native width (bug 2026-09-04, foreign A5X on Manta).
+ */
+function clampRectForLasso(r, ctx) {
+  const nb = (ctx && ctx.nativeSize) || {width: Infinity, height: Infinity};
+  const clamped = {
+    left: Math.max(1, Math.round(r.left)),
+    top: Math.max(1, Math.round(r.top)),
+    right: Math.min(nb.width - 1, Math.round(r.right)),
+    bottom: Math.min(nb.height - 1, Math.round(r.bottom)),
+  };
+  if (r.right > nb.width - 1 || r.bottom > nb.height - 1) {
+    log(
+      `lasso rect clamped to native bounds ${nb.width}x${nb.height}: ${JSON.stringify(r)} → ${JSON.stringify(clamped)} (wide title may be partially selected)`,
+    );
+  }
+  return clamped;
 }
 
 /** True when two rects overlap (touching edges count as overlap). */
