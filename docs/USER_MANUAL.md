@@ -45,15 +45,16 @@ behaviour differs by firmware are called out inline.
 it listens for the double-tap on every note page from the moment the device
 boots. The toolbar button only opens the settings screen.
 
-### File permission (v2.0.5 only)
+### File permission (Chauvet firmware only)
 
-On the v2.0.5 firmware (Chauvet `3.29.43` / `2.26.40`), the first time the
+On the Chauvet firmware (`3.29.43` / `2.26.40`), the first time the
 plugin acts on a page it asks the system for **file permission** (it needs to
 read the note and its settings, and write the heading, date and keyword). Tap
 **Allow** — or **Always allow** so it never asks again. If you decline, a popup
 says *"file permission denied — grant it to stamp headings and dates"* and
 nothing is stamped; double-tap again and allow it. The earlier firmware
-(v1.0.0) has no permission system, so this step never appears there.
+(Chauvet `3.29.42` / `2.26.39`) has no permission system, so this step never
+appears there.
 
 ## The templates
 
@@ -182,7 +183,7 @@ prefixed *SuperTemplate:* on the device.
 | *this view does not accept handwriting here* | The current view can't take handwriting actions right now |
 | *this page already has its heading* | Idempotence — nothing to do |
 | *this page was created for a larger device — not supported on this screen yet* | Foreign page from a bigger model (see *Notes created on another device*) |
-| *file permission denied — grant it to stamp headings and dates* | You declined the file permission (v2.0.5) — re-trigger and allow |
+| *file permission denied — grant it to stamp headings and dates* | You declined the file permission (Chauvet firmware) — re-trigger and allow |
 | *the conversion went wrong (firmware) — the page was cleaned, no heading applied. Trigger again* | Firmware paste bug (see below); the page was cleaned, double-tap again |
 
 ## Files
@@ -201,7 +202,7 @@ Everything lives in `MyStyle/Plugins/SuperTemplate/`:
   make sure the page uses a SuperTemplate template; check the popups and the
   log file.
 - **A popup explains a refusal**: see *The popups* table above.
-- **"file permission denied"** (v2.0.5): you declined the system
+- **"file permission denied"** (Chauvet firmware): you declined the system
   permission — double-tap again and tap Allow / Always allow.
 - **No date stamped**: a date is probably already present (see *Updating the
   date*).
@@ -215,16 +216,16 @@ displayed 1:1 and centered — the plugin handles this automatically:
 double-tap the logo where you see it. Pages created on a LARGER device are
 not supported yet; the plugin tells you so with a popup and does nothing.
 
-## Firmware bugs it works around (v1.0.0 firmware only)
+## Firmware bugs it works around (older firmware only)
 
-Two Supernote firmware bugs affected the plugin on the v1.0.0 firmware
-(Chauvet `3.29.42` / `2.26.39`). **Both are fixed on the v2.0.5 firmware
-(Chauvet `3.29.43` / `2.26.40`)**, so v2.0.5 runs noticeably cleaner there; the
+Two Supernote firmware bugs affected the plugin on the older firmware
+(Chauvet `3.29.42` / `2.26.39`). **Both are fixed on the Chauvet firmware
+(`3.29.43` / `2.26.40`)**, so the plugin runs noticeably cleaner there; the
 safeguards below stay in the code as a dormant net.
 
 ### The paste bug
 
-On the v1.0.0 firmware, if you have lasso-copied content in the copy buffer, the
+On the older firmware, if you have lasso-copied content in the copy buffer, the
 firmware spontaneously pastes it into the page during any plugin lasso
 operation — it can even hijack the heading conversion itself. This is a
 **firmware bug**, [reported and confirmed by Ratta](https://www.reddit.com/r/Supernote_dev/comments/1uodbvo/).
@@ -233,14 +234,14 @@ SuperTemplate defuses it end to end: pasted ghost content is detected and
 removed, and a hijacked conversion is repaired on the fly (the heading is
 re-pointed to *your* title). In the rare case where repair is impossible,
 the page is cleaned and a popup asks you to double-tap again. The extra
-screen flashes during processing are that cleanup at work. On the v2.0.5
+screen flashes during processing are that cleanup at work. On the Chauvet
 firmware the phantom paste no longer happens, so those extra flashes are gone.
 
 ### Old versions stacking on disk
 
-On the v1.0.0 firmware, Supernote's PluginHost keeps every previously installed
+On the older firmware, Supernote's PluginHost keeps every previously installed
 version of a plugin on disk ([bug report](https://www.reddit.com/r/Supernote_dev/comments/1uo2y0g/));
-SuperTemplate cleans its own old versions automatically at startup. The v2.0.5
+SuperTemplate cleans its own old versions automatically at startup. The Chauvet
 firmware auto-cleans them itself, so this guard is redundant there.
 
 ## Credits
