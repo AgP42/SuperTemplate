@@ -66,10 +66,10 @@ Installing the wrong build shows *"package not compatible"* or the plugin does n
 Full instructions, settings reference and troubleshooting:
 [User Manual](docs/USER_MANUAL.md).
 
-## Screen flashing — fixed on the Chauvet firmware
+## Screen flashing — fixed on Chauvet `3.29.43` / `2.26.40` and later
 
 The two firmware bugs this plugin used to work around are **fixed by Ratta on
-the Chauvet firmware** (`3.29.43` / `2.26.40`), so the plugin runs
+Chauvet `3.29.43` / `2.26.40` and later**, so the plugin runs
 noticeably cleaner there:
 
 - The **phantom lasso-paste** — the note app spontaneously pasting its lasso
@@ -80,7 +80,7 @@ noticeably cleaner there:
 - **Old plugin versions stacking on disk** is now auto-cleaned by the firmware.
   ([reported here](https://www.reddit.com/r/Supernote_dev/comments/1uo2y0g/))
 
-On the **older firmware** (Chauvet `3.29.42` / `2.26.39`) both bugs are still
+On **Chauvet `3.29.42` / `2.26.39`** both bugs are still
 present: the page
 flashes a few times while the plugin strips ghost content on the fly, and it
 cleans its own stale versions at startup. Those safety guards remain in the
@@ -98,12 +98,11 @@ Requires Node >= 18, JDK >= 19, Android SDK Platform 35. React Native is
 pinned to 0.79.2 (must match the device's PluginHost runtime — never
 upgrade).
 
-The `main` branch targets the **Chauvet firmware** (`3.29.43` /
-`2.26.40`; `sn-plugin-lib` 0.1.65, file-permission handling). To build the
-**older-firmware** (Chauvet `3.29.42` / `2.26.39`) version instead, check out
-the `v1.0.0` tag first.
+The `main` branch targets **Chauvet `3.29.43` / `2.26.40`** (`sn-plugin-lib`
+0.1.65, file-permission handling). To build the **Chauvet `3.29.42` /
+`2.26.39`** version instead, check out the `v1.0.0` tag first.
 
-Porting your own plugin to the Chauvet firmware? Field notes here:
+Porting your own plugin to Chauvet `3.29.43` / `2.26.40`? Field notes here:
 [docs/CHAUVET-MIGRATION.md](docs/CHAUVET-MIGRATION.md).
 
 Advanced: zones are stored as page-size ratios in the on-device config
