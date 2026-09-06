@@ -11,7 +11,7 @@ Manta). It ships six note templates — **lined or dot-grid**, each in black,
 light or no logo — with a title box and a datetime slot; write your title on
 the guide line, **double-tap the logo area with your finger**, and the plugin:
 
-- stamps the current date & time (4 formats x 5 languages, size options),
+- stamps the current date & time (4 formats x 6 languages, size options),
 - registers an invisible date keyword so the page is findable via
   Supernote's search (format configurable, can be turned off),
 - converts your title into a **native heading** (visible in the note's
@@ -45,7 +45,7 @@ release that matches your firmware version:
 | Your firmware (Settings → About) | Download | Notes |
 |---|---|---|
 | **Older** Chauvet `3.29.42` for Manta / Nomad, `2.26.39` for A5 X / A6 X | **[v1.0.0](../../releases/tag/v1.0.0)** | The initial version, probably not the one you need if you have flashed recently. |
-| **Plugin beta release** Chauvet `3.29.43`+ for Manta / Nomad, `2.26.40`+ for A5 X / A6 X | **[v2.0.8](../../releases/tag/v2.0.8)** | Rebuilt for `sn-plugin-lib` 0.1.65: declares & requests the file permissions the new firmware requires. Adds the dot-grid templates and fixes the title zone on notes made for another device. |
+| **Plugin beta release** Chauvet `3.29.43`+ for Manta / Nomad, `2.26.40`+ for A5 X / A6 X | **[v2.0.9](../../releases/tag/v2.0.9)** | Rebuilt for `sn-plugin-lib` 0.1.65: declares & requests the file permissions the new firmware requires. Adds the dot-grid templates, the Dutch language, fixes the title zone on notes made for another device, and fixes template install on a fresh device. |
 
 Installing the wrong build shows *"package not compatible"* or the plugin does nothing.
 

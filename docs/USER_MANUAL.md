@@ -1,6 +1,6 @@
 # SuperTemplate — User Manual
 
-*Version 2.0.8 — for Supernote devices with plugin support (tested on A5 X and
+*Version 2.0.9 — for Supernote devices with plugin support (tested on A5 X and
 Manta).*
 
 SuperTemplate automates the header of your note pages: **double-tap the S logo**
@@ -15,10 +15,11 @@ table of contents).
 There are **two releases** — a build made for one firmware version does **not**
 run on the other. Check your version under **Settings → About**:
 
-- **v2.0.8** — for Chauvet **`3.29.43`** (Manta / Nomad) / **`2.26.40`**
+- **v2.0.9** — for Chauvet **`3.29.43`** (Manta / Nomad) / **`2.26.40`**
   (A5 X / A6 X) **and later** — the firmware version that introduced the plugin
   **permission system**. This is the current build; it adds the dot-grid
-  templates and fixes the title zone on notes made for another device.
+  templates and Dutch, and fixes the title zone on notes made for another
+  device.
 - **v1.0.0** — for the previous firmware, Chauvet **`3.29.42`** (Manta / Nomad)
   / **`2.26.39`** (A5 X / A6 X), before the permission system.
 
@@ -157,7 +158,7 @@ Open via the toolbar plugin button. Everything is applied with
 | Section | Setting | Effect |
 |---------|---------|--------|
 | Template | Install / update templates | Copies/refreshes the 6 bundled templates (lined + dot-grid) into MyStyle |
-| Datetime | Language | Day/month names (FR, EN, DE, ES, IT) |
+| Datetime | Language | Day/month names (FR, EN, DE, ES, IT, NL) |
 | | Format | Four date formats, previewed live in your language |
 | | Text size | Size of the date text (S/M/L/XL) |
 | | Keyword | Off, or the format of the invisible date keyword |
