@@ -1,6 +1,6 @@
 # SuperTemplate — User Manual
 
-*Version 2.0.9 — for Supernote devices with plugin support (tested on A5 X and
+*Version 2.0.10 — for Supernote devices with plugin support (tested on A5 X and
 Manta).*
 
 SuperTemplate automates the header of your note pages: **double-tap the S logo**
@@ -15,7 +15,7 @@ table of contents).
 There are **two releases** — a build made for one firmware version does **not**
 run on the other. Check your version under **Settings → About**:
 
-- **v2.0.9** — for Chauvet **`3.29.43`** (Manta / Nomad) / **`2.26.40`**
+- **v2.0.10** — for Chauvet **`3.29.43`** (Manta / Nomad) / **`2.26.40`**
   (A5 X / A6 X) **and later** — the firmware version that introduced the plugin
   **permission system**. This is the current build; it adds the dot-grid
   templates and Dutch, and fixes the title zone on notes made for another

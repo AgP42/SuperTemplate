@@ -45,7 +45,7 @@ release that matches your firmware version:
 | Your firmware (Settings → About) | Download | Notes |
 |---|---|---|
 | **Older** Chauvet `3.29.42` for Manta / Nomad, `2.26.39` for A5 X / A6 X | **[v1.0.0](../../releases/tag/v1.0.0)** | The initial version, probably not the one you need if you have flashed recently. |
-| **Plugin beta release** Chauvet `3.29.43`+ for Manta / Nomad, `2.26.40`+ for A5 X / A6 X | **[v2.0.9](../../releases/tag/v2.0.9)** | Rebuilt for `sn-plugin-lib` 0.1.65: declares & requests the file permissions the new firmware requires. Adds the dot-grid templates, the Dutch language, fixes the title zone on notes made for another device, and fixes template install on a fresh device. |
+| **Plugin beta release** Chauvet `3.29.43`+ for Manta / Nomad, `2.26.40`+ for A5 X / A6 X | **[v2.0.10](../../releases/tag/v2.0.10)** | Rebuilt for `sn-plugin-lib` 0.1.65: declares & requests the file permissions the new firmware requires. Adds the dot-grid templates and the Dutch language, fixes the title zone on notes made for another device, and fixes template install (locates the bundled templates regardless of screen density). |
 
 Installing the wrong build shows *"package not compatible"* or the plugin does nothing.
 
