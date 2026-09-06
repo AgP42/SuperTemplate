@@ -146,11 +146,18 @@ function App(): React.JSX.Element {
     }
     const res = await installBundledTemplates();
     await flushLog('TEMPLATES');
-    setTplStatus(
-      res.installed.length
-        ? `Installed: ${res.installed.join(', ')}`
-        : `Failed: ${res.failed.join(', ') || 'nothing to install'}`,
-    );
+    if (res.installed.length && !res.failed.length) {
+      setTplStatus(`Installed: ${res.installed.join(', ')}`);
+    } else {
+      // Surface the REAL reason (permission, ENOENT, …), not just the names,
+      // so a failing device tells us exactly what to fix.
+      const reason =
+        res.errors && res.errors.length
+          ? res.errors[0]
+          : res.failed.join(', ') || 'nothing to install';
+      const ok = res.installed.length ? ` (ok: ${res.installed.length})` : '';
+      setTplStatus(`Failed${ok}: ${reason}`);
+    }
   };
 
   const now = new Date();
