@@ -23,6 +23,7 @@ import {
 } from './src/config';
 import {SUPPORTED_LANGS, formatStamp, KEYWORD_FORMATS} from './src/utils/datetime';
 import {installBundledTemplates} from './src/templatesInstall';
+import {ensureFilePermissions} from './src/utils/permissions';
 import {flushLog} from './src/utils/logger';
 
 const KOFI_QR = require('./assets/kofi-qr.png');
@@ -128,6 +129,21 @@ function App(): React.JSX.Element {
 
   const onInstallTemplates = async () => {
     setTplStatus('Installing…');
+    // Chauvet gates writes to MyStyle (shared storage) behind FILE:WRITE; the
+    // copy throws a SecurityException without it. The boot request may have
+    // been dismissed/denied, so ask again here before copying — otherwise all
+    // templates fail with "Failed …" (field report 2026-09-06, fresh Nomad).
+    let granted = false;
+    try {
+      granted = await ensureFilePermissions();
+    } catch (e) {
+      granted = false;
+    }
+    if (!granted) {
+      await flushLog('TEMPLATES');
+      setTplStatus('File permission denied — tap Allow when asked, then retry.');
+      return;
+    }
     const res = await installBundledTemplates();
     await flushLog('TEMPLATES');
     setTplStatus(

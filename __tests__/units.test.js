@@ -86,7 +86,11 @@ describe('datetime formatting', () => {
     expect(formatStamp(d, 'long', 'es')).toBe('domingo, 5 de julio de 2026');
     // it: "domenica 5 luglio 2026"
     expect(formatStamp(d, 'long', 'it')).toBe('domenica 5 luglio 2026');
-    expect(SUPPORTED_LANGS).toEqual(['fr', 'en', 'de', 'es', 'it']);
+    // nl: default dd/mm/yyyy + 24h, "zondag 5 juli 2026"
+    expect(formatStamp(d, 'fr', 'nl')).toBe('05/07/2026 09:07');
+    expect(formatStamp(d, 'long', 'nl')).toBe('zondag 5 juli 2026');
+    expect(formatStamp(d, 'day', 'nl')).toBe('zo. 05/07/2026 09:07');
+    expect(SUPPORTED_LANGS).toEqual(['fr', 'en', 'de', 'es', 'it', 'nl']);
   });
 
   it('detects German and US numeric stamps too', () => {
